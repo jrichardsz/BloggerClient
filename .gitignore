@@ -1,6 +1,11 @@
 *.class
 
 # Package Files #
-*.jar
+#*.jar
 *.war
 *.ear
+
+# folders #
+bin
+target
+
