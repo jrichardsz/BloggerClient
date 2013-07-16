@@ -1,0 +1,14 @@
+<style type="text/css">
+.plain-table {
+	border: 1px solid #333333;
+	border-collapse: collapse;
+	text-align: left;
+	margin: 0.5em 0 0.5em 0;
+	padding: 0;
+}
+
+table.plain-table > tr > td, table.plain-table > * > tr > td {
+	border: 1px solid #333333;
+	padding: 0.2em;
+}
+</style>

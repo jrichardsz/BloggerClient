@@ -1,0 +1,35 @@
+<style type="text/css">
+.code-outer-div {
+	margin: 0.5em 0 0.5em 0;
+}
+
+.code-inner-div {
+	
+}
+
+.code-textarea {
+	font-size: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+}
+
+.code-inner-pre {
+	font-size: 100%;
+	width: auto;
+	border: 1px dashed #333333;
+	margin: 0;
+	padding: 0.5em;
+	overflow: auto;
+}
+
+.code-pre {
+	font-size: 100%;
+	width: auto;
+	border: 1px dashed #333333;
+	margin: 0.5em 0 0.5em 0;
+	padding: 0.5em;
+	overflow: auto;
+}
+</style>

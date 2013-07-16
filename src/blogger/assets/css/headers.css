@@ -1,0 +1,10 @@
+<style type="text/css">
+.h1,.h2,.h3,.h4,.h5,.h6 {
+	font-weight: normal;
+	color: black;
+	margin: 0;
+	padding: 0;
+	font-size: 120%;
+}
+/* old style: .h5,.h6 bold; .h1 200%; .h2 170%; .h3 140%; .h4 110%; .h5 90%; .h6 80%; */
+</style>
