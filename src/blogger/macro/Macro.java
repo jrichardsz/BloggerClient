@@ -49,6 +49,17 @@ public class Macro {
 		return jsRelativePaths;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder2 = new StringBuilder();
+		builder2.append("Macro [name=").append(name).append(", pairedMacroName=")
+				.append(pairedMacroName).append(", html=").append(html).append(", removePreviousNewline=")
+				.append(removePreviousNewline).append(", removeNextNewline=").append(removeNextNewline)
+				.append(", cssRelativePaths=").append(cssRelativePaths).append(", jsRelativePaths=")
+				.append(jsRelativePaths).append("]");
+		return builder2.toString();
+	}
+
 	public static final class Builder {
 		private final Class<? extends Macro> clazz;
 

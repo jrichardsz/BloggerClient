@@ -4,12 +4,24 @@ import blogger.util.LogicAssert;
 
 public abstract class MacroPair {
 
-	protected final Macro first;
-	protected final Macro second;
+	private Macro first;
+	private Macro second;
 
 	public MacroPair() {
-		this.first = buildFirstMacro();
-		this.second = buildSecondMacro();
+	}
+
+	public Macro getFirst() {
+		if (first == null) {
+			first = buildFirstMacro();
+		}
+		return first;
+	}
+
+	public Macro getSecond() {
+		if (second == null) {
+			second = buildSecondMacro();
+		}
+		return second;
 	}
 
 	/**
@@ -35,6 +47,14 @@ public abstract class MacroPair {
 		LogicAssert.assertTrue(secondStr != null, "html is null, macro=%s", second);
 		result.append(secondStr);
 		return result.toString();
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("MacroPair [first=").append(first).append(", second=").append(second)
+				.append("]");
+		return builder.toString();
 	}
 
 }

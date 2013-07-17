@@ -1,12 +1,16 @@
 package blogger.macro;
 
 import java.util.HashMap;
+import java.util.List;
 
 import blogger.macro.impl.AMacro;
 import blogger.macro.impl.CodeMacro;
+import blogger.macro.impl.PlainHtmlElemMacro;
 import blogger.macro.impl.PreMacro;
 import blogger.macro.impl.RevMacro;
 import blogger.macro.impl.TableMacro;
+import blogger.util.FileUtils;
+import blogger.util.LogicAssert;
 
 public class MacroFactory {
 	private static final HashMap<String, Macro> MACRO_STORE = new HashMap<>(128, 0.25F);
@@ -50,16 +54,34 @@ public class MacroFactory {
 		addMacroPair(new CodeMacro());
 		addMacroPair(new AMacro());
 		addMacroPair(new TableMacro());
+
+		List<String> htmlElemNames = FileUtils
+				.readPackageFileAsLines("blogger/macro/PlainHtmlElem.list");
+		for (String htmlElemName : htmlElemNames) {
+			htmlElemName = htmlElemName.trim();
+			if (htmlElemName.length() > 0) {
+				addMacroPair(new PlainHtmlElemMacro(htmlElemName));
+			}
+		}
 	}
 
 	private static void addMacro(Macro macro) {
-		MACRO_STORE.put(macro.getName(), macro);
+		String macroName = macro.getName();
+		LogicAssert.assertTrue(Macro.MACRO_PATTERN.matcher(macroName).matches(),
+				"invalid macro name=%s, %s", macroName, macro);
+		LogicAssert.assertTrue(!MACRO_STORE.containsKey(macroName), "macro name is already registered",
+				macroName);
+		MACRO_STORE.put(macroName, macro);
 	}
 
 	private static void addMacroPair(MacroPair macroPair) {
-		MACRO_STORE.put(macroPair.first.getName(), macroPair.first);
-		MACRO_STORE.put(macroPair.second.getName(), macroPair.second);
-		MACRO_PAIR_STORE.put(macroPair.first.getName(), macroPair);
+		final Macro first = macroPair.getFirst(), second = macroPair.getSecond();
+		addMacro(first);
+		addMacro(second);
+		LogicAssert.assertTrue(first.getName().equals(second.getPairedMacroName())
+				&& first.getPairedMacroName().equals(second.getName()),
+				"macro names don't match in macroPair, %s", macroPair);
+		MACRO_PAIR_STORE.put(first.getName(), macroPair);
 	}
 
 	public static Macro getMacro(String name) {

@@ -84,6 +84,16 @@ IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Bas
 </ul>
 {{/pre}}
 
+== table 1 || ==
+{{table}}
+col1 || col2
+val1.1 || val1.2
+val2.1 || val2.2
+{{/table}}
+{{b}}bold{{/b}}
+{{i}}italic{{/i}}
+{{span}}span{{/span}}
+
 {{rev}}
 20130501  
 20130509

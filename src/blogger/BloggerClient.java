@@ -169,8 +169,8 @@ public class BloggerClient {
 		while ((line = bufferedReader.readLine()) != null) {
 			switch (state) {
 			case beforeMetadata:
-				LogicAssert
-						.assertTrue(line.equals("<metadata>"), "<metadata> not found at the second line");
+				LogicAssert.assertTrue(line.equals("<metadata>"),
+						"<metadata> not found at the second line, line=%s", line);
 				state = inMetadata;
 				break;
 			case inMetadata:
@@ -186,7 +186,7 @@ public class BloggerClient {
 				LogicAssert.assertTrue(false, "unknown state=" + state);
 			}
 		}
-		LogicAssert.assertTrue(state == afterMetadata, "</metadata> not found");
+		LogicAssert.assertTrue(state == afterMetadata, "</metadata> not found, state=%d", state);
 		mb[0] = metadata;
 		mb[1] = body;
 		return mb;
@@ -195,7 +195,8 @@ public class BloggerClient {
 	/**
 	 * just split properties text
 	 */
-	private BlogPostMetadata parseBlogPostMetadata(final StringBuilder metadataStr) throws IOException {
+	private BlogPostMetadata parseBlogPostMetadata(final StringBuilder metadataStr)
+			throws IOException {
 		Properties props = new Properties();
 		props.load(new StringReader(metadataStr.toString()));
 		return new BlogPostMetadata(props.getProperty("title"), props.getProperty("tags"),
