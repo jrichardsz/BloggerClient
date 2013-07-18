@@ -128,7 +128,7 @@ public class BloggerClient {
 				parsingContext.assetRelativePathSet.add("css/headers.css");
 			}
 			final StringBuilder toc = new StringBuilder(1024);
-			int headersCnt = generateTOC(toc, headerMetadataList, -1);
+			int headersCnt = generateTOC(toc, headerMetadataList, -1, new boolean[7]);
 			LogicAssert.assertTrue(headersCnt == headerMetadataList.size(),
 					"headersCnt (%d) != headerMetadataList.size (%d)", headersCnt, headerMetadataList.size());
 			body.insert(0, toc);
@@ -596,10 +596,13 @@ public class BloggerClient {
 	 *          complete header metadata list
 	 * @param listIndex
 	 *          headerMetadataList index
+	 * @param haveUnclosedLiOnLevels
+	 *          represent whether current level has unclosed &lt;li&gt;, it must be closed before
+	 *          creating another same level &lt;li&gt;
 	 * @return headers count
 	 */
 	int generateTOC(final StringBuilder toc, final List<BlogPostHeaderMetadata> headerMetadataList,
-			final int listIndex) throws IOException {
+			final int listIndex, final boolean[] haveUnclosedLiOnLevels) throws IOException {
 		if (headerMetadataList.isEmpty()) {
 			return 0;
 		}
@@ -619,7 +622,7 @@ public class BloggerClient {
 					blogPostMetadata.getLocale().equals("zh") ? "目录" : "Contents");
 			toc.append(tocHeadHtml);
 
-			headersCnt = generateTOC(toc, headerMetadataList, 0);
+			headersCnt = generateTOC(toc, headerMetadataList, 0, haveUnclosedLiOnLevels);
 			toc.append(AssetsLoader.readAssetAsText("html/toc-tail.html"));
 		}
 		else {
@@ -629,21 +632,37 @@ public class BloggerClient {
 				final BlogPostHeaderMetadata hm = headerMetadataList.get(i);
 				final int level = hm.level;
 				if (level == currentLevel) {
-					++headersCnt;
+					if (haveUnclosedLiOnLevels[currentLevel]) {
+						toc.append("</li>\n");
+					}
+					else {
+						haveUnclosedLiOnLevels[currentLevel] = true;
+					}
 					toc.append("<li><a href=\"#").append(hm.headerIdForAnchor).append("\">")
-							.append(hm.headerText).append("</a></li>").append('\n');
+							.append(hm.headerText).append("</a>");
 					i++;
+					headersCnt++;
 				}
 				else if (level > currentLevel) {
 					LogicAssert.assertTrue(level - currentLevel == 1,
 							"invalid header: %s, previous level is %d", hm, currentLevel);
-					int subHeadersCnt = generateTOC(toc, headerMetadataList, i);
+					final int subHeadersCnt = generateTOC(toc, headerMetadataList, i, haveUnclosedLiOnLevels);
+					toc.append("</li>\n");
+					haveUnclosedLiOnLevels[currentLevel] = false;
 					i += subHeadersCnt;
 					headersCnt += subHeadersCnt;
 				}
 				else { // level < currentLevel , sub-headers finished
+					if (haveUnclosedLiOnLevels[currentLevel]) {
+						toc.append("</li>\n");
+						haveUnclosedLiOnLevels[currentLevel] = false;
+					}
 					break;
 				}
+			}
+			if (haveUnclosedLiOnLevels[currentLevel]) {
+				toc.append("</li>\n");
+				haveUnclosedLiOnLevels[currentLevel] = false;
 			}
 			toc.append("</ul>\n");
 		}
