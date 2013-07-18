@@ -35,7 +35,7 @@ p2.1
 === 标题2.1.1||h 2.1.1===
 p2.1.1
 
-== POSIX Regex Tutorials List ==
+== url test 1 || ==
 ）中文的
 剩下的参考{{a}}http://en.opensuse.org/HCL:Network_%28Wireless%29 || HCL:Network (Wireless){{/a}}处理。
 1, {{a}} http://hi.baidu.com/wstone_h/item/8d63e1c471665b7188ad9e18 || 简述POSIX正则表达式 || wstone_h {{/a}} test
@@ -52,7 +52,7 @@ POSIX Extended Regular Expression Syntax http://www.boost.org/doc/libs/1_53_0/li
 IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Base Definitions and Headers, Section 9, Regular Expressions http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap09.html
 	这应该是最正式的文章了，上面的定义就来自opengroup.org。
 
-== html1 || ==
+== code 1 || ==
 {{code}}
 <ul>
 	<li>1</li>
@@ -68,7 +68,7 @@ IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Bas
 </ul>
 {{/code}}
 
-==html2==
+==pre 1|| ==
 {{pre}}
 <ul>
 	<li>1</li>
@@ -87,12 +87,19 @@ IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Bas
 == table 1 || ==
 {{table}}
 {{b}}c{{i}}col{{/i}}1{{/b}} || col2
-val1.1 || val1.2
+val1.1 || {{span}}val1.2{{/span}}
 a{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍：KDE 等离子桌面基础{{/a}}b || {{b}}val2.2{{/b}}
 {{/table}}
-{{b}}bold{{/b}}
-{{i}}italic{{/i}}
-{{span}}span{{/span}}
+
+== list 1 || ==
+{{list}}
+* Or create mixed lists
+*# and nest them
+*#* like this.
+*#* Fruits
+*#*# Apple
+*#*# Blueberry
+{{/list}}
 
 {{rev}}
 20130501  

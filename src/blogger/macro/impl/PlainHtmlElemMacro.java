@@ -5,24 +5,24 @@ import blogger.macro.MacroPair;
 
 public class PlainHtmlElemMacro extends MacroPair {
 	private final String htmlElemName;
-	private final String START_TAG, END_TAG;
+	private final String startTag, endTag;
 
 	public PlainHtmlElemMacro(String htmlElemName) {
 		super();
 		this.htmlElemName = htmlElemName;
-		START_TAG = "{{" + htmlElemName + "}}";
-		END_TAG = "{{/" + htmlElemName + "}}";
+		startTag = "{{" + htmlElemName + "}}";
+		endTag = "{{/" + htmlElemName + "}}";
 	}
 
 	@Override
 	protected Macro buildFirstMacro() {
-		return Macro.newBuilder().setName(START_TAG).setPairedMacroName(END_TAG)
+		return Macro.newBuilder().setName(startTag).setPairedMacroName(endTag)
 				.setHtml("<" + htmlElemName + ">").setRemoveNextNewline(true).build();
 	}
 
 	@Override
 	protected Macro buildSecondMacro() {
-		return Macro.newBuilder().setName(END_TAG).setPairedMacroName(START_TAG)
+		return Macro.newBuilder().setName(endTag).setPairedMacroName(startTag)
 				.setHtml("</" + htmlElemName + ">").setRemovePreviousNewline(true).build();
 	}
 

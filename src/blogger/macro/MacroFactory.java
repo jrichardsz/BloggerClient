@@ -5,6 +5,7 @@ import java.util.List;
 
 import blogger.macro.impl.AMacro;
 import blogger.macro.impl.CodeMacro;
+import blogger.macro.impl.ListMacro;
 import blogger.macro.impl.PlainHtmlElemMacro;
 import blogger.macro.impl.PreMacro;
 import blogger.macro.impl.RevMacro;
@@ -54,6 +55,7 @@ public class MacroFactory {
 		addMacroPair(new CodeMacro());
 		addMacroPair(new AMacro());
 		addMacroPair(new TableMacro());
+		addMacroPair(new ListMacro());
 
 		List<String> htmlElemNames = FileUtils
 				.readPackageFileAsLines("blogger/macro/PlainHtmlElem.list");

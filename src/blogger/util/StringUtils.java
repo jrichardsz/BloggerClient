@@ -1,5 +1,11 @@
 package blogger.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
 public class StringUtils {
 
 	public static void replaceCharToStr(StringBuilder builder, final char ch, final String str) {
@@ -37,6 +43,17 @@ public class StringUtils {
 				break;
 			}
 		}
+	}
+
+	public static List<String> readTextAsLines(final String text) throws IOException {
+		final List<String> result = new ArrayList<>();
+		try (BufferedReader bufferedReader = new BufferedReader(new StringReader(text))) {
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				result.add(line);
+			}
+		}
+		return result;
 	}
 
 }
