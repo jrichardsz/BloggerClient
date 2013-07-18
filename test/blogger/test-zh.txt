@@ -68,7 +68,7 @@ IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Bas
 </ul>
 {{/code}}
 
-==pre 1|| ==
+==pre1||==
 {{pre}}
 <ul>
 	<li>1</li>

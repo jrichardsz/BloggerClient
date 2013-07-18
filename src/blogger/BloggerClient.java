@@ -519,13 +519,16 @@ public class BloggerClient {
 				final List<BlogPostHeaderMetadata> headerMetadataList = parsingContext.headerMetadataList;
 				final boolean notoc = parsingContext.notoc;
 
-				final String header = line.substring(startingEqualSignCount, line.length()
-						- endingEqualSignCount); // space is allowed, so no header.trim()
+				final String header = line.substring(startingEqualSignCount,
+						line.length() - endingEqualSignCount).trim(); // trim, header/alias can't be empty
 				final String section = getSection(headerMetadataList, startingEqualSignCount);
 				String headerText, headerIdForAnchor = null;
 				if (header.indexOf("||") >= 0) {
+					LogicAssert.assertTrue(header.indexOf("||") > 0, "invalid header=%s", header);
 					String[] ss = header.split("\\|\\|");
-					LogicAssert.assertTrue(ss.length == 2, "invalid header=%s", header);
+					if (ss.length == 1) { // case like "pre1||"
+						ss = new String[] { ss[0], "" };
+					}
 					headerText = ss[0].trim();
 					if (!notoc) {
 						ss[1] = ss[1].trim();
