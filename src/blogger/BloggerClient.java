@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +23,7 @@ import blogger.macro.MacroFactory;
 import blogger.macro.Macro;
 import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
+import blogger.util.PureStack;
 import blogger.util.StringUtils;
 
 public class BloggerClient {
@@ -227,76 +227,6 @@ public class BloggerClient {
 			body.delete(body.length() - cnt, body.length());
 	}
 
-	private void processBlogFile0(final StringBuilder body, final ParsingContext parsingContext)
-			throws Exception {
-		final List<StrRegion> macroRegionList = getMacrosRegion(body);
-		final int bodyLen = body.length();
-		final StringBuilder newBody = new StringBuilder(bodyLen);
-		Macro pair1stMacro = null;
-		StrRegion previousMacroRegion = new StrRegion("", 0, 0);
-		for (StrRegion macroRegion : macroRegionList) {
-			Macro macro = MacroFactory.getMacro(macroRegion.str);
-			LogicAssert.assertTrue(macro != null, "can't find macro, %s", macroRegion);
-			injectAssetRelativePaths(macro.getCssRelativePaths(), parsingContext);
-			injectAssetRelativePaths(macro.getJsRelativePaths(), parsingContext);
-			if (pair1stMacro != null) {
-				LogicAssert.assertTrue(
-						pair1stMacro.getPairedMacroName().equals(macro.getName()),
-						"no paired macro, %s, %s, %s",
-						pair1stMacro.getName(),
-						macro.getName(),
-						body.substring(previousMacroRegion.end,
-								Math.min(macroRegion.start, previousMacroRegion.end + 100)));
-			}
-			{
-				int start = macroRegion.start, end = macroRegion.end;
-				start = macro.isRemovePreviousNewline() && start > 0 && body.charAt(start - 1) == '\n' ? start - 1
-						: start;
-				end = macro.isRemoveNextNewline() && end < bodyLen && body.charAt(end) == '\n' ? end + 1
-						: end;
-				if (start != macroRegion.start || end != macroRegion.end)
-					macroRegion = new StrRegion(macroRegion.str, start, end);
-			}
-			if (macro.getPairedMacroName() != null) {
-				//TODO nested macro is not supported for now
-				if (macro.getName().indexOf('/') >= 0) {
-					LogicAssert.assertTrue(
-							pair1stMacro != null && pair1stMacro.getPairedMacroName().equals(macro.getName()),
-							"no paired macro, %s, %s, %s",
-							pair1stMacro.getName(),
-							macro.getName(),
-							body.substring(previousMacroRegion.end,
-									Math.min(macroRegion.start, previousMacroRegion.end + 100)));
-					newBody.append(expandMacroPair(pair1stMacro, macro,
-							body.substring(previousMacroRegion.end, macroRegion.start)));
-					pair1stMacro = null;
-				}
-				else {
-					newBody.append(processMacroOuterRegion(
-							body.substring(previousMacroRegion.end, macroRegion.start), parsingContext));
-					pair1stMacro = macro;
-				}
-			}
-			else {
-				if (macro.getName().equals(MacroFactory.NOTOC.getName())) {
-					parsingContext.notoc = true;
-				}
-				newBody.append(processMacroOuterRegion(
-						body.substring(previousMacroRegion.end, macroRegion.start), parsingContext));
-				newBody.append(expandMacro(macro));
-			}
-			previousMacroRegion = macroRegion;
-		}
-		// handle the left region
-		if (previousMacroRegion.end < bodyLen) {
-			newBody.append(processMacroOuterRegion(body.substring(previousMacroRegion.end, bodyLen),
-					parsingContext));
-		}
-
-		body.setLength(0);
-		body.append(newBody);
-	}
-
 	private static final class ParsingContext {
 		final List<BlogPostHeaderMetadata> headerMetadataList = new ArrayList<>();
 		/**
@@ -304,16 +234,147 @@ public class BloggerClient {
 		 */
 		final HashSet<String> assetRelativePathSet = new HashSet<>(1024, 0.25F);
 		boolean notoc = false;
+		int processingNestedMacrosDepth = 0;
 	}
 
-	List<StrRegion> getMacrosRegion(StringBuilder body) {
-		final ArrayList<StrRegion> regionList = new ArrayList<>();
-		Matcher matcher = Macro.MACRO_PATTERN.matcher(body);
-		while (matcher.find()) {
-			int start = matcher.start(), end = matcher.end();
-			regionList.add(new StrRegion(body.substring(start, end), start, end));
+	private void processBlogFile0(final StringBuilder body, final ParsingContext parsingContext)
+			throws Exception {
+		final List<MacroRegion> macroRegionList = getMacroRegionList(body);
+		StringBuilder newBody = processBlogFile00(body, macroRegionList, 0, macroRegionList.size() - 1,
+				parsingContext);
+		body.setLength(0);
+		body.append(newBody);
+	}
+
+	private StringBuilder processBlogFile00(final StringBuilder body,
+			final List<MacroRegion> macroRegionList, final int listStartIndex, final int listEndIndex,
+			final ParsingContext parsingContext) throws Exception {
+		final StringBuilder newBody = new StringBuilder(listEndIndex == 0 ? body.length() : 128);
+		final boolean processingNestedMacros = parsingContext.processingNestedMacrosDepth > 0;
+		final int startIndex = processingNestedMacros ? listStartIndex + 1 : listStartIndex;
+		final int endIndex = processingNestedMacros ? listEndIndex - 1 : listEndIndex;
+		final int textStart = processingNestedMacros ? macroRegionList.get(listStartIndex).end : 0;
+		final int textEnd = processingNestedMacros ? macroRegionList.get(listEndIndex).start : body
+				.length(); // textEnd - textStart == textLen
+		MacroRegion previousMacroRegion = new MacroRegion("", textStart, textStart, -1);
+		for (int index = startIndex; index <= endIndex;) {
+			final MacroRegion macroRegion = macroRegionList.get(index);
+			final Macro macro = MacroFactory.getMacro(macroRegion.macroName);
+			injectAssetRelativePaths(macro.getCssRelativePaths(), parsingContext);
+			injectAssetRelativePaths(macro.getJsRelativePaths(), parsingContext);
+			newBody.append(processMacroOuterRegion(
+					body.substring(previousMacroRegion.end, macroRegion.start), parsingContext));
+			if (macroRegion.pairedMacroRegionIndex < 0) { // no paired macro
+				if (macro.getName().equals(MacroFactory.NOTOC.getName())) {
+					parsingContext.notoc = true;
+				}
+				newBody.append(macro.getHtml());
+				index++;
+				previousMacroRegion = macroRegion;
+			}
+			else { // has paired macro
+				MacroRegion pairedMacroRegion = macroRegionList.get(macroRegion.pairedMacroRegionIndex);
+				if (macroRegion.pairedMacroRegionIndex - macroRegion.index == 1) { // no nested macros
+					newBody.append(MacroFactory.getMacroPair(macro.getName()).getHtml(
+							body.substring(macroRegion.end, pairedMacroRegion.start)));
+				}
+				else { // has nested macros
+					parsingContext.processingNestedMacrosDepth += 1;
+					StringBuilder embededStr = processBlogFile00(body, macroRegionList, macroRegion.index,
+							macroRegion.pairedMacroRegionIndex, parsingContext);
+					parsingContext.processingNestedMacrosDepth -= 1;
+					newBody.append(MacroFactory.getMacroPair(macro.getName()).getHtml(embededStr.toString()));
+				}
+				index += (macroRegion.pairedMacroRegionIndex - macroRegion.index + 1);
+				previousMacroRegion = pairedMacroRegion;
+			}
 		}
-		return regionList;
+		// handle left end region
+		if (previousMacroRegion.end < textEnd) {
+			newBody.append(processMacroOuterRegion(body.substring(previousMacroRegion.end, textEnd),
+					parsingContext));
+		}
+		return newBody;
+	}
+
+	List<MacroRegion> getMacroRegionList(StringBuilder body) {
+		final int bodyLen = body.length();
+		final List<MacroRegion> macroRegionList = new ArrayList<>();
+		final List<StrRegion> strRegionList = new ArrayList<>();
+		{
+			Matcher matcher = Macro.MACRO_PATTERN.matcher(body);
+			while (matcher.find()) {
+				int start = matcher.start(), end = matcher.end();
+				strRegionList.add(new StrRegion(body.substring(start, end), start, end));
+			}
+			matcher = null;
+		}
+		final PureStack<MacroRegion> macroRegionStack = new PureStack<>();
+		for (int index = 0, len = strRegionList.size(); index < len; index++) {
+			final StrRegion strRegion = strRegionList.get(index);
+			final Macro macro = MacroFactory.getMacro(strRegion.str);
+			LogicAssert.assertTrue(macro != null, "can't find macro, region=%s", strRegion);
+			int start = strRegion.start, end = strRegion.end;
+			start = macro.isRemovePreviousNewline() && start > 0 && body.charAt(start - 1) == '\n' ? start - 1
+					: start;
+			end = macro.isRemoveNextNewline() && end < bodyLen && body.charAt(end) == '\n' ? end + 1
+					: end;
+			if (macro.getPairedMacroName() == null) { // single macro
+				macroRegionList.add(new MacroRegion(strRegion.str, start, end, index));
+			}
+			else { // paried macro
+				MacroRegion macroRegion = new MacroRegion(strRegion.str, start, end, index);
+				macroRegionList.add(macroRegion);
+				if (macro.getName().indexOf('/') < 0) { // 1st macro of pair
+					macroRegionStack.push(macroRegion);
+				}
+				else { // 2nd macro of pair
+					MacroRegion pairedMacroRegion = macroRegionStack.pop();
+					LogicAssert.assertTrue(pairedMacroRegion != null, "no paired macro region, region=%s",
+							strRegion);
+					LogicAssert.assertTrue(
+							macro.getPairedMacroName().equals(pairedMacroRegion.macroName),
+							"no paired macro, %s, %s, %s",
+							macroRegion.macroName,
+							pairedMacroRegion.macroName,
+							body.subSequence(pairedMacroRegion.end,
+									Math.min(macroRegion.start, pairedMacroRegion.end + 100)));
+					pairedMacroRegion.pairedMacroRegionIndex = macroRegion.index;
+					macroRegion.pairedMacroRegionIndex = pairedMacroRegion.index;
+				}
+			}
+		}
+		return macroRegionList;
+	}
+
+	static final class MacroRegion {
+		final String macroName;
+		final int start, end;
+		/**
+		 * Index in region list. Start from 0.
+		 */
+		final int index;
+		/**
+		 * -1 means no paired macro region
+		 */
+		int pairedMacroRegionIndex = -1;
+
+		public MacroRegion(String macroName, int start, int end, int index) {
+			super();
+			this.macroName = macroName;
+			this.start = start;
+			this.end = end;
+			this.index = index;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("MacroRegion [macroName=").append(macroName).append(", start=").append(start)
+					.append(", end=").append(end).append(", index=").append(index)
+					.append(", pairedMacroRegionIndex=").append(pairedMacroRegionIndex).append("]");
+			return builder.toString();
+		}
 	}
 
 	private void injectAssetRelativePaths(String assetRelativePaths, ParsingContext parsingContext) {
@@ -331,7 +392,11 @@ public class BloggerClient {
 	}
 
 	String processMacroOuterRegion(final String str, final ParsingContext parsingContext)
-			throws IOException, URISyntaxException {
+			throws IOException {
+		if (parsingContext.processingNestedMacrosDepth > 0) {
+			// do not handle nested outer region
+			return str;
+		}
 		final StringBuilder result = new StringBuilder(str);
 		generatePlainLink(result);
 		generateSpaceBrAndAnchor(result, parsingContext);
@@ -372,7 +437,7 @@ public class BloggerClient {
 	}
 
 	void generateSpaceBrAndAnchor(final StringBuilder str, final ParsingContext parsingContext)
-			throws IOException, URISyntaxException {
+			throws IOException {
 		final int strLen = str.length();
 		if (strLen == 0) {
 			return;
@@ -399,8 +464,7 @@ public class BloggerClient {
 	}
 
 	private void generateSpaceBrAndAnchorOneLine(final String line, final boolean endsWithNewline,
-			final StringBuilder newStr, final ParsingContext parsingContext) throws IOException,
-			URISyntaxException {
+			final StringBuilder newStr, final ParsingContext parsingContext) throws IOException {
 		if (line.isEmpty()) {
 			if (endsWithNewline)
 				newStr.append("<br/>");
@@ -535,7 +599,7 @@ public class BloggerClient {
 	 * @return headers count
 	 */
 	int generateTOC(final StringBuilder toc, final List<BlogPostHeaderMetadata> headerMetadataList,
-			final int listIndex) throws IOException, URISyntaxException {
+			final int listIndex) throws IOException {
 		if (headerMetadataList.isEmpty()) {
 			return 0;
 		}
@@ -586,7 +650,7 @@ public class BloggerClient {
 		return headersCnt;
 	}
 
-	private static final class StrRegion {
+	static final class StrRegion {
 		final String str;
 		final int start, end;
 
@@ -600,17 +664,6 @@ public class BloggerClient {
 		public String toString() {
 			return String.format("StrRegion [str=%s, start=%s, end=%s]", str, start, end);
 		}
-	}
-
-	private String expandMacro(Macro macro) {
-		return macro.getHtml();
-	}
-
-	private String expandMacroPair(Macro firstMacro, Macro secondMacro, String embededStr)
-			throws Exception {
-		LogicAssert.assertTrue(firstMacro.getPairedMacroName().equals(secondMacro.getName()),
-				"invalid macro pair, %s, %s", firstMacro, secondMacro);
-		return MacroFactory.getMacroPair(firstMacro.getName()).getHtml(embededStr);
 	}
 
 	private void expandSpecialMacros(final StringBuilder body) {

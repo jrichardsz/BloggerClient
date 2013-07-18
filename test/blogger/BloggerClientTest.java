@@ -6,21 +6,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.junit.Test;
 
+import blogger.BloggerClient.MacroRegion;
+import blogger.util.FileUtils;
+
 public class BloggerClientTest {
 	private static final BloggerClient client = BloggerClient.getInstance();
-	private static final String testFileName = "test-zh.txt";
 	private static final String charsetName = "UTF-8";
-
-	public static void main(String[] args) throws Exception {
-		BloggerClientTest test = new BloggerClientTest();
-//		test.getFileByPathOrURITest();
-//		test.readMetadataAndBodyTest();
-		test.processBlogFileTest();
-//		test.generatePlainLinkTest();
-	}
 
 	@Test
 	public void readMetadataAndBodyTest() throws IOException, URISyntaxException {
@@ -42,7 +37,7 @@ public class BloggerClientTest {
 	}
 
 	private File getTestBlogFile() throws URISyntaxException {
-		java.net.URL url = getClass().getResource(testFileName);
+		java.net.URL url = getClass().getResource("test-zh.txt");
 		File blogFile = new File(url.toURI());
 		return blogFile;
 	}
@@ -60,6 +55,15 @@ public class BloggerClientTest {
 		System.out.println(str);
 		client.generatePlainLink(str);
 		System.out.println(str);
+	}
+
+	@Test
+	public void getMacroRegionListTest() throws IOException {
+		List<MacroRegion> mrList = client.getMacroRegionList(FileUtils
+				.readPackageFileAsText("blogger/test-zh.txt"));
+		for (MacroRegion mr : mrList) {
+			System.out.println(mr);
+		}
 	}
 
 }

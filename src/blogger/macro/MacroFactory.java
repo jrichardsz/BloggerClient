@@ -76,6 +76,10 @@ public class MacroFactory {
 
 	private static void addMacroPair(MacroPair macroPair) {
 		final Macro first = macroPair.getFirst(), second = macroPair.getSecond();
+		LogicAssert.assertTrue(first.getName().indexOf('/') < 0,
+				"invalid first macro name in pair, name=%s", first.getName());
+		LogicAssert.assertTrue(second.getName().indexOf('/') > 0,
+				"invalid second macro name in pair, name=%s", second.getName());
 		addMacro(first);
 		addMacro(second);
 		LogicAssert.assertTrue(first.getName().equals(second.getPairedMacroName())

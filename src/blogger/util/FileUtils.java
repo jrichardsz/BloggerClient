@@ -32,7 +32,8 @@ public class FileUtils {
 	 * </p>
 	 * 
 	 * @param name
-	 * @return file's text lines file relative path, i.e. blogger/macro/PlainHtmlElem.list
+	 *          file relative path, i.e. blogger/macro/PlainHtmlElem.list
+	 * @return file's text lines, it won't be null
 	 */
 	public static List<String> readPackageFileAsLines(final String name) throws IOException {
 		final List<String> result = new ArrayList<>();
@@ -43,6 +44,38 @@ public class FileUtils {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				result.add(line);
+			}
+		}
+		finally {
+			if (bufferedReader != null)
+				bufferedReader.close();
+		}
+		return result;
+	}
+
+	/**
+	 * load package file from sub-package as text.
+	 * <p>
+	 * file encoding must be UTF-8.
+	 * </p>
+	 * <p>
+	 * do NOT include Unicode BOM in package file, it won't be removed.
+	 * </p>
+	 * 
+	 * @param name
+	 *          file relative path, i.e. blogger/macro/PlainHtmlElem.list
+	 * @return file's text, it won't be null
+	 */
+	public static StringBuilder readPackageFileAsText(final String name) throws IOException {
+		final StringBuilder result = new StringBuilder(1024);
+		BufferedReader bufferedReader = null;
+		try {
+			bufferedReader = new BufferedReader(new InputStreamReader(FileUtils.class.getClassLoader()
+					.getResourceAsStream(name), "UTF-8"));
+			final char[] cbuf = new char[1024];
+			int len;
+			while ((len = bufferedReader.read(cbuf)) >= 0) {
+				result.append(cbuf, 0, len);
 			}
 		}
 		finally {

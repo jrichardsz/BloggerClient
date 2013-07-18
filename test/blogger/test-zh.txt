@@ -86,9 +86,9 @@ IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Bas
 
 == table 1 || ==
 {{table}}
-col1 || col2
+{{b}}c{{i}}col{{/i}}1{{/b}} || col2
 val1.1 || val1.2
-val2.1 || val2.2
+a{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍：KDE 等离子桌面基础{{/a}}b || {{b}}val2.2{{/b}}
 {{/table}}
 {{b}}bold{{/b}}
 {{i}}italic{{/i}}
@@ -101,5 +101,4 @@ val2.1 || val2.2
 
 * a 
 * b
-* {{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍：KDE 等离子桌面基础{{/a}}
 
