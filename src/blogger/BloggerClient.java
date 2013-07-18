@@ -504,7 +504,7 @@ public class BloggerClient {
 			if (endsWithNewline)
 				newStr.append("<br/>");
 		}
-		// it's header (h1, h2, h3, ...)
+		// it's header (h1, ..., h6)
 		else {
 			for (int index = lineLen - 1; index >= startingEqualSignCount; index--) {
 				if (line.charAt(index) == '=')
@@ -513,6 +513,9 @@ public class BloggerClient {
 					break;
 			}
 			if (startingEqualSignCount == endingEqualSignCount) {
+				LogicAssert.assertTrue(startingEqualSignCount <= 6,
+						"invalid header, equal sign count must be <=6, current value=%d",
+						startingEqualSignCount);
 				final List<BlogPostHeaderMetadata> headerMetadataList = parsingContext.headerMetadataList;
 				final boolean notoc = parsingContext.notoc;
 
@@ -543,7 +546,7 @@ public class BloggerClient {
 				headerMetadataList.add(new BlogPostHeaderMetadata(startingEqualSignCount, headerText,
 						headerIdForAnchor));
 				// ref http://www.w3.org/TR/html4/struct/links.html
-				int hd = startingEqualSignCount + 1;
+				final int hd = startingEqualSignCount;
 				newStr.append(notoc ? String.format("<h%d class=\"h%d\">%s</h%d>", hd, hd, headerText, hd)
 						: String.format("<h%d id=\"%s\" class=\"h%d\">%s</h%d>", hd, headerIdForAnchor, hd,
 								headerText, hd));
@@ -598,7 +601,8 @@ public class BloggerClient {
 	 *          headerMetadataList index
 	 * @param haveUnclosedLiOnLevels
 	 *          represent whether current level has unclosed &lt;li&gt;, it must be closed before
-	 *          creating another same level &lt;li&gt;
+	 *          creating another same level &lt;li&gt;. Index [1,6] will be used for [h1,h6], so its
+	 *          size must be greater than 7.
 	 * @return headers count
 	 */
 	int generateTOC(final StringBuilder toc, final List<BlogPostHeaderMetadata> headerMetadataList,
