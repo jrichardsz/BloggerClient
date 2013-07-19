@@ -36,21 +36,18 @@ p2.1
 p2.1.1
 
 == url test 1 || ==
-）中文的
-剩下的参考{{a}}http://en.opensuse.org/HCL:Network_%28Wireless%29 || HCL:Network (Wireless){{/a}}处理。
-1, {{a}} http://hi.baidu.com/wstone_h/item/8d63e1c471665b7188ad9e18 || 简述POSIX正则表达式 || wstone_h {{/a}} test
-2, a{{a}}http://a.cn||A{{/a}}bhttp://b.cn Bc{{a}}http://c.cn||C{{/a}}d
+a{{a}}http://a.cn||A{{/a}}bhttp://b.cn Bc{{a}}http://c.cn||C{{/a}}d
+regex url list
+{{list}}
+* {{a}} http://hi.baidu.com/wstone_h/item/8d63e1c471665b7188ad9e18 || 简述POSIX正则表达式 || wstone_h {{/a}} test
 
-）英文的
-http://en.wikipedia.org/wiki/Regular_expression#POSIX
-	包括POSIX Basic Regular Expressions、POSIX Extended Regular Expressions、POSIX character classes。这是基础标准，支持比较广泛，特别是POSIX Basic Regular Expressions。这里的描述很详细，特别是[ ]元字符。
+* http://en.wikipedia.org/wiki/Regular_expression#POSIX 包括POSIX Basic Regular Expressions、POSIX Extended Regular Expressions、POSIX character classes。这是基础标准，支持比较广泛，特别是POSIX Basic Regular Expressions。这里的描述很详细，特别是[ ]元字符。
 
-POSIX Basic Regular Expression Syntax http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_syntax.html
+*{{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_syntax.html || POSIX Basic Regular Expression Syntax{{/a}}
+*{{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html || POSIX Extended Regular Expression Syntax{{/a}}
 
-POSIX Extended Regular Expression Syntax http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html
-
-IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Base Definitions and Headers, Section 9, Regular Expressions http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap09.html
-	这应该是最正式的文章了，上面的定义就来自opengroup.org。
+*    {{a}}http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap09.html || IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Base Definitions and Headers, Section 9, Regular Expressions{{/a}}
+{{/list}}
 
 == code 1 || ==
 {{code}}
@@ -97,7 +94,7 @@ a{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍�
 *# and nest them
 *#* like this.
 *#* Fruits
-*#*# Apple
+*#*# Apple 	
 *#*# Blueberry
 {{/list}}
 

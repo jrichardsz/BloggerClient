@@ -9,9 +9,9 @@ import blogger.util.LogicAssert;
 import blogger.util.StringUtils;
 
 /**
- * This macro will output html ul/ol element, it is similar to Mediawiki format, only '*' and '#'
- * are allowed and they could be mixed.<br/>
- * Text should be put between {{list}} and {{/list}}.
+ * This macro will output html ul/ol element, it is similar to Mediawiki list format, only '*' and
+ * '#' are allowed and they could be mixed.<br/>
+ * Text should be put between {{list}} and {{/list}}, empty lines are allowed and will be removed.
  */
 public class ListMacro extends MacroPair {
 	public static final String START_TAG = "{{list}}";
@@ -20,7 +20,7 @@ public class ListMacro extends MacroPair {
 	@Override
 	protected Macro buildFirstMacro() {
 		return Macro.newBuilder().setName(START_TAG).setPairedMacroName(END_TAG)
-				.setRemoveNextNewline(true).build();
+				.setRemoveNextNewline(true).setCssRelativePaths("css/list.css").build();
 	}
 
 	@Override
@@ -51,6 +51,9 @@ public class ListMacro extends MacroPair {
 		final int maxLevelStrLen = 16;
 		final List<ListItemMetadata> itemMetadataList = new ArrayList<>();
 		for (String line : StringUtils.readTextAsLines(embededStr)) {
+			if (line.trim().isEmpty()) {
+				continue;
+			}
 			char ch;
 			int levelStrLen = 0;
 			for (int index = 0, len = line.length(); index < len; index++) {
@@ -65,7 +68,7 @@ public class ListMacro extends MacroPair {
 			LogicAssert.assertTrue(levelStrLen <= maxLevelStrLen,
 					"at most %d '*' and '#' is allowed, current count=%d", maxLevelStrLen, levelStrLen);
 			itemMetadataList.add(new ListItemMetadata(line.substring(0, levelStrLen), line
-					.substring(levelStrLen)));
+					.substring(levelStrLen).trim()));
 		}
 		// verify metadata list style: the same length levelStr must be the same
 		{
@@ -85,6 +88,20 @@ public class ListMacro extends MacroPair {
 		return result.toString();
 	}
 
+	/**
+	 * 
+	 * @param listHtml
+	 *          list html storage
+	 * @param itemMetadataList
+	 *          list items metadata list
+	 * @param listIndex
+	 *          itemMetadataList index
+	 * @param haveUnclosedLiOnLevels
+	 *          represent whether current level has unclosed &lt;li&gt;, it must be closed before
+	 *          creating another same level &lt;li&gt;. Index [1,maxLevelStrLen] will be used.
+	 * @return list items count
+	 * @see blogger.BloggerClient#generateTOC()
+	 */
 	private int getListHtml(final StringBuilder listHtml,
 			final List<ListItemMetadata> itemMetadataList, final int listIndex,
 			final boolean[] haveUnclosedLiOnLevels) {
@@ -137,9 +154,9 @@ public class ListMacro extends MacroPair {
 		final String levelStr = md.levelStr;
 		switch (levelStr.charAt(levelStr.length() - 1)) {
 		case '*':
-			return start ? "<ul>" : "</ul>";
+			return start ? "<ul class=\"bc-list\">" : "</ul>";
 		case '#':
-			return start ? "<ol>" : "</ol>";
+			return start ? "<ol class=\"bc-list\">" : "</ol>";
 		default:
 			throw new RuntimeException("unknown char, levelStr=" + levelStr);
 		}
