@@ -550,8 +550,8 @@ public class BloggerClient {
 						headerIdForAnchor));
 				// ref http://www.w3.org/TR/html4/struct/links.html
 				final int hd = startingEqualSignCount;
-				newStr.append(notoc ? String.format("<h%d class=\"h%d\">%s</h%d>", hd, hd, headerText, hd)
-						: String.format("<h%d id=\"%s\" class=\"h%d\">%s</h%d>", hd, headerIdForAnchor, hd,
+				newStr.append(notoc ? String.format("<h%d class=\"bc-h%d\">%s</h%d>", hd, hd, headerText, hd)
+						: String.format("<h%d id=\"%s\" class=\"bc-h%d\">%s</h%d>", hd, headerIdForAnchor, hd,
 								headerText, hd));
 			}
 			else {

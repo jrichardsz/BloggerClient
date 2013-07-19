@@ -38,7 +38,7 @@ public class TableMacro extends MacroPair {
 		//TODO reverse '|' and '\' by '\'
 		LogicAssert.assertTrue(embededStr.trim().length() > 0, "empty table content");
 		final StringBuilder result = new StringBuilder(embededStr.length());
-		result.append("<table class=\"plain-table\">");
+		result.append("<table class=\"bc-plain-table\">");
 		BufferedReader br = new BufferedReader(new StringReader(embededStr));
 		String line;
 		int columnCnt = -1;

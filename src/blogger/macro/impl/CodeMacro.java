@@ -45,9 +45,9 @@ public class CodeMacro extends MacroPair {
 				AssetsLoader.readAssetAsText("html/code-textarea-head.html"));
 		StringUtils.replaceFirstStr(result, "${rows}", rows + "");
 		final long uniqueId = new Random().nextInt(Integer.MAX_VALUE);
-		StringUtils.replaceAllStr(result, "${code-span-id}", "code-span-" + uniqueId);
-		StringUtils.replaceAllStr(result, "${wrapline-span-id}", "wrapline-span-" + uniqueId);
-		StringUtils.replaceAllStr(result, "${code-textarea-id}", "code-textarea-" + uniqueId);
+		StringUtils.replaceAllStr(result, "${code-span-id}", "bc-code-span-" + uniqueId);
+		StringUtils.replaceAllStr(result, "${wrapline-span-id}", "bc-wrapline-span-" + uniqueId);
+		StringUtils.replaceAllStr(result, "${code-textarea-id}", "bc-code-textarea-" + uniqueId);
 		result.append(embededStr);
 		result.append("</textarea></div>");
 		return result.toString();

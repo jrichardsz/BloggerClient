@@ -1,5 +1,5 @@
 <script type="text/javascript" >
-function wrapline_textarea(targetElemId, sourceElemId) {
+function bc_wrapline_textarea(targetElemId, sourceElemId) {
 var targetElem = document.getElementById(targetElemId);
 var sourceElem = document.getElementById(sourceElemId);
 if (targetElem.wrap == "off") {

@@ -1,13 +1,13 @@
 <style type="text/css">
-.code-outer-div {
+.bc-code-outer-div {
 	margin: 0.5em 0 0.5em 0;
 }
 
-.code-inner-div {
+.bc-code-inner-div {
 	
 }
 
-.code-textarea {
+.bc-code-textarea {
 	font-size: 100%;
 	width: 100%;
 	margin: 0;
@@ -15,7 +15,7 @@
 	overflow: auto;
 }
 
-.code-inner-pre {
+.bc-code-inner-pre {
 	font-size: 100%;
 	width: auto;
 	border: 1px dashed #333333;
@@ -24,7 +24,7 @@
 	overflow: auto;
 }
 
-.code-pre {
+.bc-code-pre {
 	font-size: 100%;
 	width: auto;
 	border: 1px dashed #333333;

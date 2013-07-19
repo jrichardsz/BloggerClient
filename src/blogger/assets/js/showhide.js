@@ -1,5 +1,5 @@
 <script type="text/javascript" >
-function showhide(targetElemId, sourceElemId) {
+function bc_showhide(targetElemId, sourceElemId) {
 var targetElem = document.getElementById(targetElemId);
 var sourceElem = document.getElementById(sourceElemId);
 if (targetElem.style.display == "none") {

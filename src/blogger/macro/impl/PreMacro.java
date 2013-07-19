@@ -41,19 +41,19 @@ public class PreMacro extends MacroPair {
 		rows += 1; // there's one line even no new line
 		StringBuilder result = new StringBuilder();
 		if (rows > 15) {
-			result.append("<div class=\"code-outer-div\">\n");
+			result.append("<div class=\"bc-code-outer-div\">\n");
 			result
-					.append("<div class=\"code-inner-div\"><span>Pre</span><a href=\"#\" onclick=\"return false;\"><span id=\"${code-span-id}\" onclick=\"showhide('${code-pre-id}', '${code-span-id}');\">[-]</span></a></div>\n");
-			result.append("<pre id=\"${code-pre-id}\" class=\"code-inner-pre\">\n");
+					.append("<div class=\"bc-code-inner-div\"><span>Pre</span><a href=\"#\" onclick=\"return false;\"><span id=\"${code-span-id}\" onclick=\"bc_showhide('${code-pre-id}', '${code-span-id}');\">[-]</span></a></div>\n");
+			result.append("<pre id=\"${code-pre-id}\" class=\"bc-code-inner-pre\">\n");
 			long uniqueId = new Random().nextInt(Integer.MAX_VALUE);
-			StringUtils.replaceAllStr(result, "${code-span-id}", "code-span-" + uniqueId);
-			StringUtils.replaceAllStr(result, "${code-pre-id}", "code-pre-" + uniqueId);
+			StringUtils.replaceAllStr(result, "${code-span-id}", "bc-code-span-" + uniqueId);
+			StringUtils.replaceAllStr(result, "${code-pre-id}", "bc-code-pre-" + uniqueId);
 			result.append(embededStr);
 			result.append("</pre>\n");
 			result.append("</div>\n");
 		}
 		else {
-			result.append("<pre class=\"code-pre\">\n");
+			result.append("<pre class=\"bc-code-pre\">\n");
 			result.append(embededStr);
 			result.append("</pre>\n");
 		}
