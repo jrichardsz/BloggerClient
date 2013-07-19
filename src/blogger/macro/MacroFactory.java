@@ -33,9 +33,15 @@ public class MacroFactory {
 	/**
 	 * used to generate blog post revisions header
 	 */
-	public static final Macro REV = Macro.newBuilder(RevMacro.class).setName("{{rev}}")
+	private static final Macro REV = Macro.newBuilder(RevMacro.class).setName("{{rev}}")
 			.setHtml("<h4 class=\"revisions\">=${rev}=</h4>\n").setRemoveNextNewline(true)
 			.setCssRelativePaths("css/revisions.css").build();
+
+	private static final Macro BR = Macro.newBuilder().setName("{{br}}").setHtml("<br/>")
+			.setRemoveNextNewline(true).build();
+
+	private static final Macro HR = Macro.newBuilder().setName("{{hr}}").setHtml("<hr/>")
+			.setRemoveNextNewline(true).build();
 
 	static {
 		try {
@@ -50,6 +56,8 @@ public class MacroFactory {
 		addMacro(READMORE);
 		addMacro(NOTOC);
 		addMacro(REV);
+		addMacro(BR);
+		addMacro(HR);
 
 		addMacroPair(new PreMacro());
 		addMacroPair(new CodeMacro());

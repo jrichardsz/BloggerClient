@@ -11,14 +11,8 @@ public class Macro {
 	private String html;
 	private boolean removePreviousNewline;
 	private boolean removeNextNewline;
-	/**
-	 * CSS files' relative paths in assets package, separated by ','
-	 */
-	private String cssRelativePaths = "";
-	/**
-	 * JavaScript files' relative paths in assets package, separated by ','
-	 */
-	private String jsRelativePaths = "";
+	private String cssRelativePaths;
+	private String jsRelativePaths;
 	public static final String assetRelativePathsSeparator = ",";
 
 	public String getName() {
@@ -100,11 +94,21 @@ public class Macro {
 			return this;
 		}
 
+		/**
+		 * @param cssRelativePaths
+		 *          CSS files' relative paths in assets package, separated by ',', i.e.
+		 *          "css/code.css, css/toc.css"
+		 */
 		public Builder setCssRelativePaths(String cssRelativePaths) {
 			this.cssRelativePaths = cssRelativePaths;
 			return this;
 		}
 
+		/**
+		 * @param jsRelativePaths
+		 *          JavaScript files' relative paths in assets package, separated by ',', i.e.
+		 *          "js/showhide.js, js/wrapline-textarea.js"
+		 */
 		public Builder setJsRelativePaths(String jsRelativePaths) {
 			this.jsRelativePaths = jsRelativePaths;
 			return this;

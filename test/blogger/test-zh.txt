@@ -37,16 +37,31 @@ p2.1.1
 
 == url test 1 || ==
 a{{a}}http://a.cn||A{{/a}}bhttp://b.cn Bc{{a}}http://c.cn||C{{/a}}d
+
+{{a}}#code-1 || section code 1{{/a}}
+
+http://en.wikipedia.org/wiki/Regular_expression#POSIX
+* http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_syntax.html
+* http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html
+
+{{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html || POSIX Extended Regular Expression Syntax || || {{/a}}
+{{hr}}
+
 regex url list
 {{list}}
 * {{a}} http://hi.baidu.com/wstone_h/item/8d63e1c471665b7188ad9e18 || 简述POSIX正则表达式 || wstone_h {{/a}} test
 
-* http://en.wikipedia.org/wiki/Regular_expression#POSIX 包括POSIX Basic Regular Expressions、POSIX Extended Regular Expressions、POSIX character classes。这是基础标准，支持比较广泛，特别是POSIX Basic Regular Expressions。这里的描述很详细，特别是[ ]元字符。
+* {{a}}http://en.wikipedia.org/wiki/Regular_expression#POSIX || Regular_expression#POSIX{{/a}}{{br}}包括POSIX Basic Regular Expressions、POSIX Extended Regular Expressions、POSIX character classes。这是基础标准，支持比较广泛，特别是POSIX Basic Regular Expressions。这里的描述很详细，特别是[ ]元字符。
 
-*{{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_syntax.html || POSIX Basic Regular Expression Syntax{{/a}}
-*{{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html || POSIX Extended Regular Expression Syntax{{/a}}
+* {{a}}http://en.wikipedia.org/wiki/Regular_expression#POSIX || Regular_expression#POSIX{{/a}}
+** 包括POSIX Basic Regular Expressions、POSIX Extended Regular Expressions、POSIX character classes。
+** 这是基础标准，支持比较广泛，特别是POSIX Basic Regular Expressions。
+** 这里的描述很详细，特别是[ ]元字符。
 
-*    {{a}}http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap09.html || IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Base Definitions and Headers, Section 9, Regular Expressions{{/a}}
+* {{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_syntax.html || POSIX Basic Regular Expression Syntax{{/a}}
+* {{a}}http://www.boost.org/doc/libs/1_53_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html || POSIX Extended Regular Expression Syntax{{/a}}
+
+* {{a}}http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap09.html || IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Base Definitions and Headers, Section 9, Regular Expressions{{/a}}
 {{/list}}
 
 == code 1 || ==
@@ -102,7 +117,4 @@ a{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍�
 20130501  
 20130509
  2013 05 10
-
-* a 
-* b
 
