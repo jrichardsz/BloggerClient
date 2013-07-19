@@ -14,13 +14,13 @@ public class HtmlMacro extends MacroPair {
 
 	@Override
 	protected Macro buildFirstMacro() {
-		return Macro.newBuilder().setName(START_TAG).setPairedMacroName(END_TAG).setHtml("")
+		return Macro.newBuilder().setName(START_TAG).setPairedMacroName(END_TAG).setHtml("<div>")
 				.setRemoveNextNewline(true).build();
 	}
 
 	@Override
 	protected Macro buildSecondMacro() {
-		return Macro.newBuilder().setName(END_TAG).setPairedMacroName(START_TAG).setHtml("")
+		return Macro.newBuilder().setName(END_TAG).setPairedMacroName(START_TAG).setHtml("</div>")
 				.setRemovePreviousNewline(true).setRemoveNextNewline(true).build();
 	}
 
