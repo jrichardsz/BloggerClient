@@ -1,5 +1,6 @@
 package blogger;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -9,6 +10,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,10 +38,11 @@ class BloggerClientFrame extends JFrame {
 
 	private final AtomicInteger atomicGridy = new AtomicInteger(0);
 	private final int columns = 2, insets = 5;
+	private final Dimension preferredSize = new Dimension(900, 900);
 
 	public BloggerClientFrame(String title) {
 		super(title);
-		setSize(900, 900);
+		setSize(preferredSize);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setContentPane(getContentPanel());
@@ -100,7 +104,7 @@ class BloggerClientFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser jfc = new JFileChooser(currentDirectory);
-				jfc.setPreferredSize(new Dimension(900, 900));
+				jfc.setPreferredSize(preferredSize);
 				jfc.showOpenDialog(BloggerClientFrame.this);
 				final File blogFile = jfc.getSelectedFile();
 				if (blogFile != null) {
@@ -168,8 +172,24 @@ class BloggerClientFrame extends JFrame {
 	private void handleEDTException(Exception e) {
 		//TODO redirect stdout/stderr to UI console
 		e.printStackTrace();
-		//TODO show message in textarea
-		JOptionPane.showMessageDialog(this, e, "exception from EDT", JOptionPane.ERROR_MESSAGE);
+		// show error message in textarea
+		final JPanel panel = new JPanel();
+		{
+			panel.setPreferredSize(new Dimension(800, 600));
+			BorderLayout layout = new BorderLayout();
+			panel.setLayout(layout);
+			JTextArea exStackArea = new JTextArea();
+			exStackArea.setEditable(false);
+			exStackArea.setLineWrap(false);
+			exStackArea.setWrapStyleWord(false);
+			exStackArea.setMinimumSize(new Dimension(640, 240));
+			panel.add(new JScrollPane(exStackArea), BorderLayout.CENTER);
+			StringWriter sw = new StringWriter(1024);
+			sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
+			e.printStackTrace(new PrintWriter(sw));
+			exStackArea.setText(sw.toString());
+		}
+		JOptionPane.showMessageDialog(this, panel, "Exception stack", JOptionPane.ERROR_MESSAGE);
 	}
 
 	private void fillOneLineComponents(final JPanel p, final GBC gbc, final Component... comps) {

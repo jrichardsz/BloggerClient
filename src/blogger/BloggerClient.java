@@ -28,6 +28,9 @@ import blogger.util.PureStack;
 import blogger.util.StringUtils;
 
 public class BloggerClient {
+	public static final String VERSION = "V0.5.5";
+	public static final String NAME = "Blogger Client";
+
 	static {
 		// try {
 		// UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
@@ -66,7 +69,7 @@ public class BloggerClient {
 	}
 
 	private void showUI() {
-		BloggerClientFrame frame = new BloggerClientFrame("Blogger Client");
+		BloggerClientFrame frame = new BloggerClientFrame(NAME);
 		frame.setVisible(true);
 	}
 

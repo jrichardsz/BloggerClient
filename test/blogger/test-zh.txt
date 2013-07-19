@@ -110,7 +110,7 @@ regex url list
 
 == table 1 || ==
 {{table}}
-ccol1 || col2
+col1 || col2
 val1.1 || val1.2
 val2.1 || val2.2
 {{/table}}
@@ -134,11 +134,11 @@ val1.1 || val1.2
 
 == html 2 || ==
 {{html}}
-<ul>
+<ul style="margin: 0;">
 	<li>This macro will output html code from input</li>
 	<li>text should be pure html code</li>
 	<li>nested macros are not allowed</li>
-</ul>
+</ul>{{br}}
 {{/html}}
 
 {{rev}}
