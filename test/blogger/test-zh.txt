@@ -35,6 +35,13 @@ p2.1
 === 标题2.1.1||h 2.1.1===
 p2.1.1
 
+== list 1 || ==
+{{list}}
+* This macro will output html ul/ol element
+* it is similar to Mediawiki list format, only '*' and '#' are allowed and they could be mixed.
+* empty lines are allowed and will be removed
+{{/list}}
+
 == url test 1 || ==
 a{{a}}http://a.cn||A{{/a}}bhttp://b.cn Bc{{a}}http://c.cn||C{{/a}}d
 
@@ -63,6 +70,11 @@ regex url list
 
 * {{a}}http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap09.html || IEEE Std 1003.1, 2004 Edition, Portable Operating System Interface (POSIX ), Base Definitions and Headers, Section 9, Regular Expressions{{/a}}
 {{/list}}
+
+== html 1 || ==
+{{html}}
+<div>test nested html: <a href="http://en.wikipedia.org/" target="_blank">Wikipedia</a></div>
+{{/html}}
 
 == code 1 || ==
 {{code}}
@@ -98,12 +110,19 @@ regex url list
 
 == table 1 || ==
 {{table}}
-{{b}}c{{i}}col{{/i}}1{{/b}} || col2
-val1.1 || {{span}}val1.2{{/span}}
-a{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍：KDE 等离子桌面基础{{/a}}b || {{b}}val2.2{{/b}}
+ccol1 || col2
+val1.1 || val1.2
+val2.1 || val2.2
 {{/table}}
 
-== list 1 || ==
+== table 2 || ==
+{{table}}
+{{b}}c{{i}}col{{/i}}1{{/b}} || col2
+val1.1 || val1.2
+{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍：KDE 等离子桌面基础{{/a}} || {{b}}val2.2{{/b}}
+{{/table}}
+
+== list 2 || ==
 {{list}}
 * Or create mixed lists
 *# and nest them
@@ -112,6 +131,15 @@ a{{a}}http://v.youku.com/v_show/id_XNTIzNjA2OTIw.html || openSUSE 桌面介绍�
 *#*# Apple 	
 *#*# Blueberry
 {{/list}}
+
+== html 2 || ==
+{{html}}
+<ul>
+	<li>This macro will output html code from input</li>
+	<li>text should be pure html code</li>
+	<li>nested macros are not allowed</li>
+</ul>
+{{/html}}
 
 {{rev}}
 20130501  

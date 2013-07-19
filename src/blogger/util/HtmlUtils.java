@@ -2,7 +2,6 @@ package blogger.util;
 
 import java.util.regex.Pattern;
 
-
 public class HtmlUtils {
 
 	/**
@@ -48,8 +47,13 @@ public class HtmlUtils {
 	}
 
 	public static void replaceHtmlEntities(final StringBuilder body) {
+		replaceHtmlEntities(body, 0, body.length() - 1);
+	}
+
+	public static void replaceHtmlEntities(final StringBuilder body, final int startIndex,
+			final int endIndex) {
 		for (String[] entity : LEFT_HTML_ENTITIES) {
-			StringUtils.replaceCharToStr(body, entity[0].charAt(0), entity[1]);
+			StringUtils.replaceCharToStr(body, startIndex, endIndex, entity[0].charAt(0), entity[1]);
 		}
 	}
 

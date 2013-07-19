@@ -8,11 +8,16 @@ import java.util.List;
 
 public class StringUtils {
 
-	public static void replaceCharToStr(StringBuilder builder, final char ch, final String str) {
+	public static void replaceCharToStr(StringBuilder builder, final char fromChar, final String toStr) {
+		replaceCharToStr(builder, 0, builder.length() - 1, fromChar, toStr);
+	}
+
+	public static void replaceCharToStr(StringBuilder builder, final int startIndex,
+			final int endIndex, final char fromChar, final String toStr) {
 		// replace from ending to starting, no need to change index dynamically
-		for (int index = builder.length() - 1; index >= 0; index--) {
-			if (builder.charAt(index) == ch) {
-				builder.replace(index, index + 1, str);
+		for (int index = endIndex; index >= startIndex; index--) {
+			if (builder.charAt(index) == fromChar) {
+				builder.replace(index, index + 1, toStr);
 			}
 		}
 	}

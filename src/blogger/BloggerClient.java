@@ -21,6 +21,7 @@ import javax.swing.JFrame;
 import blogger.assets.AssetsLoader;
 import blogger.macro.MacroFactory;
 import blogger.macro.Macro;
+import blogger.macro.impl.HtmlMacro;
 import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
 import blogger.util.PureStack;
@@ -115,7 +116,6 @@ public class BloggerClient {
 		StringUtils.replaceAllStr(body, "\r", "\n");
 		removeStartingEndingNewlines(body);
 		StringUtils.replaceCharToStr(body, '\t', "    "); // 4 white spaces
-		HtmlUtils.replaceHtmlEntities(body);
 		final ParsingContext parsingContext = new ParsingContext();
 		processBlogFile0(body, parsingContext);
 		expandSpecialMacros(body);
@@ -239,6 +239,28 @@ public class BloggerClient {
 
 	private void processBlogFile0(final StringBuilder body, final ParsingContext parsingContext)
 			throws Exception {
+		// replaceHtmlEntities for text that is outside of {{html}} and {{/html}}
+		{
+			List<MacroRegion> macroRegionList = getMacroRegionList(body);
+			MacroRegion previousMacroRegion = new MacroRegion("", body.length() - 1, -1, -1);
+			for (int index = macroRegionList.size() - 1; index >= 0;) {
+				final MacroRegion macroRegion = macroRegionList.get(index);
+				if (macroRegion.macroName.equals(HtmlMacro.END_TAG)) {
+					HtmlUtils.replaceHtmlEntities(body, macroRegion.end, previousMacroRegion.start);
+					previousMacroRegion = macroRegionList.get(macroRegion.pairedMacroRegionIndex);
+					index -= (macroRegion.index - macroRegion.pairedMacroRegionIndex);
+				}
+				else {
+					index--;
+				}
+			}
+			if (previousMacroRegion.start > 0) {
+				HtmlUtils.replaceHtmlEntities(body, 0, previousMacroRegion.start);
+			}
+			macroRegionList.clear();
+			previousMacroRegion = null;
+			macroRegionList = null;
+		}
 		final List<MacroRegion> macroRegionList = getMacroRegionList(body);
 		StringBuilder newBody = processBlogFile00(body, macroRegionList, 0, macroRegionList.size() - 1,
 				parsingContext);
@@ -339,6 +361,10 @@ public class BloggerClient {
 							pairedMacroRegion.macroName,
 							body.subSequence(pairedMacroRegion.end,
 									Math.min(macroRegion.start, pairedMacroRegion.end + 100)));
+					if (macroRegion.macroName.equals(HtmlMacro.END_TAG)) {
+						LogicAssert.assertTrue(macroRegion.index - pairedMacroRegion.index == 1,
+								"{{html}} doesn't allow nested macros");
+					}
 					pairedMacroRegion.pairedMacroRegionIndex = macroRegion.index;
 					macroRegion.pairedMacroRegionIndex = pairedMacroRegion.index;
 				}
@@ -349,7 +375,16 @@ public class BloggerClient {
 
 	static final class MacroRegion {
 		final String macroName;
-		final int start, end;
+		/**
+		 * The beginning index, inclusive.<br/>
+		 * It may be changed to another value.
+		 */
+		final int start;
+		/**
+		 * The ending index, exclusive.<br/>
+		 * It may be changed to another value.
+		 */
+		final int end;
 		/**
 		 * Index in region list. Start from 0.
 		 */
@@ -423,8 +458,7 @@ public class BloggerClient {
 		final List<StrRegion> linkTextRegionList = new ArrayList<>();
 		while (matcher.find()) {
 			int start = matcher.start(), end = matcher.end();
-			String linkText = result.substring(start, end);
-			linkTextRegionList.add(new StrRegion(linkText, start, end));
+			linkTextRegionList.add(new StrRegion(result.substring(start, end), start, end));
 		}
 		int offset = 0;
 		for (StrRegion region : linkTextRegionList) {
@@ -550,9 +584,9 @@ public class BloggerClient {
 						headerIdForAnchor));
 				// ref http://www.w3.org/TR/html4/struct/links.html
 				final int hd = startingEqualSignCount;
-				newStr.append(notoc ? String.format("<h%d class=\"bc-h%d\">%s</h%d>", hd, hd, headerText, hd)
-						: String.format("<h%d id=\"%s\" class=\"bc-h%d\">%s</h%d>", hd, headerIdForAnchor, hd,
-								headerText, hd));
+				newStr.append(notoc ? String.format("<h%d class=\"bc-h%d\">%s</h%d>", hd, hd, headerText,
+						hd) : String.format("<h%d id=\"%s\" class=\"bc-h%d\">%s</h%d>", hd, headerIdForAnchor,
+						hd, headerText, hd));
 			}
 			else {
 				LogicAssert.assertTrue(false,
@@ -678,7 +712,14 @@ public class BloggerClient {
 
 	static final class StrRegion {
 		final String str;
-		final int start, end;
+		/**
+		 * The beginning index, inclusive.
+		 */
+		final int start;
+		/**
+		 * The ending index, exclusive.
+		 */
+		final int end;
 
 		public StrRegion(String str, int start, int end) {
 			this.str = str;
