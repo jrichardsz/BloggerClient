@@ -138,7 +138,7 @@ class BloggerClientFrame extends JFrame {
 							tagsField.setText(metadata.getTags());
 							uniquetokenField.setText(metadata.getUniquetoken());
 							blogHtmlArea.setText(metadata.getHtmlBody());
-							if (Desktop.isDesktopSupported()) {
+							if (verifyDesktopOpen()) {
 								Desktop.getDesktop().open(metadata.getHtmlFile());
 							}
 						}
@@ -173,23 +173,10 @@ class BloggerClientFrame extends JFrame {
 		//TODO redirect stdout/stderr to UI console
 		e.printStackTrace();
 		// show error message in textarea
-		final JPanel panel = new JPanel();
-		{
-			panel.setPreferredSize(new Dimension(800, 600));
-			BorderLayout layout = new BorderLayout();
-			panel.setLayout(layout);
-			JTextArea exStackArea = new JTextArea();
-			exStackArea.setEditable(false);
-			exStackArea.setLineWrap(false);
-			exStackArea.setWrapStyleWord(false);
-			exStackArea.setMinimumSize(new Dimension(640, 240));
-			panel.add(new JScrollPane(exStackArea), BorderLayout.CENTER);
-			StringWriter sw = new StringWriter(1024);
-			sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
-			e.printStackTrace(new PrintWriter(sw));
-			exStackArea.setText(sw.toString());
-		}
-		JOptionPane.showMessageDialog(this, panel, "Exception stack", JOptionPane.ERROR_MESSAGE);
+		StringWriter sw = new StringWriter(1024);
+		sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
+		e.printStackTrace(new PrintWriter(sw));
+		showTextInTextareaDialog(sw.toString(), "Exception stack", JOptionPane.ERROR_MESSAGE);
 	}
 
 	private void fillOneLineComponents(final JPanel p, final GBC gbc, final Component... comps) {
@@ -208,6 +195,35 @@ class BloggerClientFrame extends JFrame {
 			}
 		}
 		atomicGridy.addAndGet(1);
+	}
+
+	private boolean verifyDesktopOpen() {
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+			return true;
+		}
+		else {
+			String message = "File can't be opened by system default viewer, so html can't be previewed."
+					+ " If you are running Linux,"
+					+ " try to read http://zenzhong8383.blogspot.com/2013/05/enable-java-awt-desktop-on-linux-en.html"
+					+ " to solve it.";
+			showTextInTextareaDialog(message, "Desktop open doesn't work", JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+	}
+
+	private void showTextInTextareaDialog(String message, String title, int messageType) {
+		final JPanel panel = new JPanel();
+		panel.setPreferredSize(new Dimension(800, 600));
+		BorderLayout layout = new BorderLayout();
+		panel.setLayout(layout);
+		JTextArea exStackArea = new JTextArea();
+		exStackArea.setEditable(false);
+		exStackArea.setLineWrap(false);
+		exStackArea.setWrapStyleWord(false);
+		exStackArea.setMinimumSize(new Dimension(640, 240));
+		panel.add(new JScrollPane(exStackArea), BorderLayout.CENTER);
+		exStackArea.setText(message);
+		JOptionPane.showMessageDialog(this, panel, title, messageType);
 	}
 
 }
