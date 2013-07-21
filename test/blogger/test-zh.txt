@@ -2,6 +2,7 @@ first line will be ignored.
 <metadata>
 title = 测试 || Test 1
 tags = zh, test
+# locale is not required
 locale = zh
 </metadata>
 
@@ -138,7 +139,7 @@ val1.1 || val1.2
 	<li>This macro will output html code from input</li>
 	<li>text should be pure html code</li>
 	<li>nested macros are not allowed</li>
-</ul>{{br}}
+</ul>
 {{/html}}
 
 {{rev}}

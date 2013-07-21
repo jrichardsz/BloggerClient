@@ -22,10 +22,15 @@ public class BlogPostMetadata {
 			this.title = enTitle = title;
 		}
 		this.tags = tags;
-		LogicAssert.assertTrue(locale.length() > 0, "locale is not set");
-		this.locale = locale;
-		this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase() + "-"
-				+ locale.toLowerCase();
+		if (locale == null || locale.trim().isEmpty()) {
+			this.locale = "";
+			this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase();
+		}
+		else {
+			this.locale = locale = locale.trim();
+			this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase() + "-"
+					+ locale.toLowerCase();
+		}
 		// in order to verify blanks by mistake
 		LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0, "invalid uniquetoken=%s", uniquetoken);
 		HtmlUtils.verifyHtmlElementId(uniquetoken);
@@ -39,6 +44,9 @@ public class BlogPostMetadata {
 		return tags;
 	}
 
+	/**
+	 * @return locale or empty string
+	 */
 	public String getLocale() {
 		return locale;
 	}
