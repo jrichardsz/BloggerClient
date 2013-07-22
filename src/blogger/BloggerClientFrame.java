@@ -1,6 +1,5 @@
 package blogger;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -28,6 +27,7 @@ import javax.swing.SwingWorker;
 
 import blogger.util.FileUtils;
 import blogger.util.GBC;
+import blogger.util.UiUtils;
 
 class BloggerClientFrame extends JFrame {
 	private static final long serialVersionUID = -7454768920259135362L;
@@ -42,13 +42,10 @@ class BloggerClientFrame extends JFrame {
 
 	public BloggerClientFrame(String title) {
 		super(title);
-		setSize(preferredSize);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
-		setContentPane(getContentPanel());
+		setContentPane(getCustomContentPanel());
 	}
 
-	private JPanel getContentPanel() {
+	private JPanel getCustomContentPanel() {
 		JPanel p = new JPanel();
 		p.setLayout(new GridBagLayout());
 
@@ -176,7 +173,8 @@ class BloggerClientFrame extends JFrame {
 		StringWriter sw = new StringWriter(1024);
 		sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
 		e.printStackTrace(new PrintWriter(sw));
-		showTextInTextareaDialog(sw.toString(), "Exception stack", JOptionPane.ERROR_MESSAGE);
+		UiUtils.showTextInTextareaDialog(this, sw.toString(), "Exception stack",
+				JOptionPane.ERROR_MESSAGE);
 	}
 
 	private void fillOneLineComponents(final JPanel p, final GBC gbc, final Component... comps) {
@@ -206,24 +204,10 @@ class BloggerClientFrame extends JFrame {
 					+ " If you are running Linux,"
 					+ " try to read http://zenzhong8383.blogspot.com/2013/05/enable-java-awt-desktop-on-linux-en.html"
 					+ " to solve it.";
-			showTextInTextareaDialog(message, "Desktop open doesn't work", JOptionPane.ERROR_MESSAGE);
+			UiUtils.showTextInTextareaDialog(this, message, "Desktop open doesn't work",
+					JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
-	}
-
-	private void showTextInTextareaDialog(String message, String title, int messageType) {
-		final JPanel panel = new JPanel();
-		panel.setPreferredSize(new Dimension(800, 600));
-		BorderLayout layout = new BorderLayout();
-		panel.setLayout(layout);
-		JTextArea exStackArea = new JTextArea();
-		exStackArea.setEditable(false);
-		exStackArea.setLineWrap(false);
-		exStackArea.setWrapStyleWord(false);
-		exStackArea.setMinimumSize(new Dimension(640, 240));
-		panel.add(new JScrollPane(exStackArea), BorderLayout.CENTER);
-		exStackArea.setText(message);
-		JOptionPane.showMessageDialog(this, panel, title, messageType);
 	}
 
 }

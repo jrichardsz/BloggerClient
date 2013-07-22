@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.net.ProxySelector;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,10 +18,13 @@ import java.util.regex.Pattern;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import blogger.assets.AssetsLoader;
-import blogger.macro.MacroFactory;
 import blogger.macro.Macro;
+import blogger.macro.MacroFactory;
 import blogger.macro.impl.HtmlMacro;
 import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
@@ -28,23 +32,51 @@ import blogger.util.PureStack;
 import blogger.util.StringUtils;
 
 public class BloggerClient {
-	public static final String VERSION = "V0.5.5";
-	public static final String NAME = "Blogger Client";
+	public static final String VERSION = "V0.6.0";
+	public static final String NAME = "BloggerClientZZ"; // do not contain blanks
+	public static final String CONF_FILENAME = "conf.properties";
 
-	static {
-		// try {
-		// UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-		// }
-		// catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-		// | UnsupportedLookAndFeelException e) {
-		// e.printStackTrace();
-		// }
-		JFrame.setDefaultLookAndFeelDecorated(true);
-		JDialog.setDefaultLookAndFeelDecorated(true);
+	public File getUserDataHome() {
+		File dir = new File(System.getProperty("user.home"), "." + NAME);
+		if (!dir.exists()) {
+			if (!dir.mkdir()) {
+				throw new RuntimeException(String.format("create directory [%s] failed", dir));
+			}
+		}
+		else if (!dir.isDirectory()) {
+			throw new RuntimeException(String.format("[%s] already exists and it's not directory.", dir));
+		}
+		return dir;
 	}
 
 	public static void main(String[] args) {
-		INSTANCE.showUI();
+		// custom L&F
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		JFrame.setDefaultLookAndFeelDecorated(true);
+		JDialog.setDefaultLookAndFeelDecorated(true);
+		//
+		try {
+			Configuration cfg = new Configuration(new File(INSTANCE.getUserDataHome(), CONF_FILENAME),
+					BloggerClient.class.getResource(CONF_FILENAME).toURI());
+			ProxySelector.setDefault(cfg.getProxySelector());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		// show UI
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				INSTANCE.createAndShowGUI();
+			}
+		});
 	}
 
 	private static final BloggerClient INSTANCE = new BloggerClient();
@@ -68,8 +100,11 @@ public class BloggerClient {
 		return INSTANCE;
 	}
 
-	private void showUI() {
-		BloggerClientFrame frame = new BloggerClientFrame(NAME);
+	private void createAndShowGUI() {
+		final BloggerClientFrame frame = new BloggerClientFrame(NAME);
+		frame.setSize(900, 900);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 	}
 

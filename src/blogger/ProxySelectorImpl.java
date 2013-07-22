@@ -40,4 +40,9 @@ public final class ProxySelectorImpl extends ProxySelector {
 		System.out.println(String.format("connectFailed(%s, %s, %s)", uri, sa, ioe));
 	}
 
+	@Override
+	public String toString() {
+		return String.format("ProxySelectorImpl [proxyList=%s]", proxyList);
+	}
+
 }
