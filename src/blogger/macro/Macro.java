@@ -2,7 +2,18 @@ package blogger.macro;
 
 import java.util.regex.Pattern;
 
+import blogger.BlogPostProcessor;
+
 public class Macro {
+	private static final ThreadLocal<BlogPostProcessor> BLOG_POST_PROCESSOR = new ThreadLocal<>();
+
+	protected BlogPostProcessor getBlogPostProcessor() {
+		return BLOG_POST_PROCESSOR.get();
+	}
+
+	public void injectBlogPostProcessor(BlogPostProcessor processor) {
+		BLOG_POST_PROCESSOR.set(processor);
+	}
 
 	public static final Pattern MACRO_PATTERN = Pattern.compile("\\{\\{/?[a-z0-9-]+\\}\\}");
 

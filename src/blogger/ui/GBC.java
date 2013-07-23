@@ -1,4 +1,4 @@
-package blogger.util;
+package blogger.ui;
 
 import java.awt.GridBagConstraints;
 import java.awt.Insets;

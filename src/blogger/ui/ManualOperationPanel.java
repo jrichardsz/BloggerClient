@@ -1,4 +1,4 @@
-package blogger;
+package blogger.ui;
 
 import java.awt.Component;
 import java.awt.Desktop;
@@ -9,44 +9,42 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
+import blogger.BlogPostMetadata;
+import blogger.BlogPostProcessor;
 import blogger.util.FileUtils;
-import blogger.util.GBC;
 import blogger.util.UiUtils;
 
-class BloggerClientFrame extends JFrame {
-	private static final long serialVersionUID = -7454768920259135362L;
+public class ManualOperationPanel extends JPanel {
+	private static final long serialVersionUID = 5520046034875968938L;
+
+	private final BloggerClientFrame frame;
 
 	private static final String DEFAULT_CHARSET_NAME = "UTF-8";
-	private final BloggerClient client = BloggerClient.getInstance();
 	private File currentDirectory = new File(System.getProperty("user.home"));
 
 	private final AtomicInteger atomicGridy = new AtomicInteger(0);
 	private final int columns = 2, insets = 5;
-	private final Dimension preferredSize = new Dimension(900, 900);
 
-	public BloggerClientFrame(String title) {
-		super(title);
-		setContentPane(getCustomContentPanel());
+	public ManualOperationPanel(BloggerClientFrame frame) {
+		this.frame = frame;
+		createGUI();
 	}
 
-	private JPanel getCustomContentPanel() {
-		JPanel p = new JPanel();
+	private void createGUI() {
+		final ManualOperationPanel p = this;
 		p.setLayout(new GridBagLayout());
 
 		final JTextField charsetField = new JTextField(DEFAULT_CHARSET_NAME);
@@ -61,21 +59,20 @@ class BloggerClientFrame extends JFrame {
 
 		fillOneLineComponents(p, null, new JLabel("File encoding: "), charsetField);
 		fillOneLineComponents(p, null, new JLabel("Current blog file: "), currentBlogFileField);
-		fillOneLineComponents(p,
-				new GBC(1, atomicGridy.get(), 1, 1).setFill(GBC.HORIZONTAL).setWeight(1.0, 0.0),
-				new JLabel("Drag & drop file above OR click \"Choose blog file\" button"));
+		fillOneLineComponents(p, new GBC(1, atomicGridy.get(), 1, 1).setFill(GBC.HORIZONTAL)
+				.setWeight(1.0, 0.0), new JLabel(
+				"Drag & drop file above OR click \"Choose blog file\" button"));
 		final JPanel btnPanel = new JPanel();
 		btnPanel.add(chooseBlogFileBtn);
 		btnPanel.add(processBlogFileBtn);
 		btnPanel.add(closeBlogFileBtn);
-		fillOneLineComponents(p,
-				new GBC(1, atomicGridy.get(), 1, 1).setFill(GBC.HORIZONTAL).setWeight(1.0, 0.0), btnPanel);
+		fillOneLineComponents(p, new GBC(1, atomicGridy.get(), 1, 1).setFill(GBC.HORIZONTAL)
+				.setWeight(1.0, 0.0), btnPanel);
 		fillOneLineComponents(p, null, new JLabel("Title: "), titleField);
 		fillOneLineComponents(p, null, new JLabel("Tags: "), tagsField);
 		fillOneLineComponents(p, null, new JLabel("Unique token: "), uniquetokenField);
-		fillOneLineComponents(p,
-				new GBC(0, atomicGridy.get(), columns, 1).setFill(GBC.BOTH).setWeight(1.0, 1.0),
-				new JScrollPane(blogHtmlArea));
+		fillOneLineComponents(p, new GBC(0, atomicGridy.get(), columns, 1).setFill(GBC.BOTH)
+				.setWeight(1.0, 1.0), new JScrollPane(blogHtmlArea));
 
 		// === initComponents ===
 		//
@@ -92,7 +89,7 @@ class BloggerClientFrame extends JFrame {
 							.getParentFile();
 				}
 				catch (URISyntaxException ex) {
-					handleEDTException(ex);
+					UiUtils.handleEDTException(frame, ex);
 				}
 			}
 		});
@@ -101,8 +98,8 @@ class BloggerClientFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser jfc = new JFileChooser(currentDirectory);
-				jfc.setPreferredSize(preferredSize);
-				jfc.showOpenDialog(BloggerClientFrame.this);
+				jfc.setPreferredSize(new Dimension(900, 900));
+				jfc.showOpenDialog(frame);
 				final File blogFile = jfc.getSelectedFile();
 				if (blogFile != null) {
 					currentDirectory = jfc.getCurrentDirectory();
@@ -110,6 +107,8 @@ class BloggerClientFrame extends JFrame {
 				}
 			}
 		});
+		//
+		final AtomicReference<BlogPostProcessor> blogPostProcessorRef = new AtomicReference<>();
 		//
 		processBlogFileBtn.addActionListener(new ActionListener() {
 			@Override
@@ -124,7 +123,9 @@ class BloggerClientFrame extends JFrame {
 						String charsetName = charsetField.getText().trim();
 						if (charsetName.isEmpty())
 							charsetName = DEFAULT_CHARSET_NAME;
-						return client.processBlogFile(blogFile, charsetName);
+						BlogPostProcessor blogPostProcessor = new BlogPostProcessor();
+						blogPostProcessorRef.set(blogPostProcessor);
+						return blogPostProcessor.processBlogFile(blogFile, charsetName);
 					}
 
 					@Override
@@ -135,12 +136,10 @@ class BloggerClientFrame extends JFrame {
 							tagsField.setText(metadata.getTags());
 							uniquetokenField.setText(metadata.getUniquetoken());
 							blogHtmlArea.setText(metadata.getHtmlBody());
-							if (verifyDesktopOpen()) {
-								Desktop.getDesktop().open(metadata.getHtmlFile());
-							}
+							Desktop.getDesktop().open(metadata.getHtmlFile());
 						}
 						catch (Exception e) {
-							handleEDTException(e);
+							UiUtils.handleEDTException(frame, e);
 						}
 					}
 				}.execute();
@@ -155,26 +154,12 @@ class BloggerClientFrame extends JFrame {
 				tagsField.setText("");
 				uniquetokenField.setText("");
 				blogHtmlArea.setText("");
-				File blogHtmlFile = client.getBlogPostMetadata().getHtmlFile();
-				client.getBlogHtmlFileList().remove(blogHtmlFile);
-				if (blogHtmlFile.exists() && blogHtmlFile.delete() == false) {
-					System.out.println(String.format("delete %s failed", blogHtmlFile.getAbsolutePath()));
+				File blogHtmlFile = blogPostProcessorRef.get().getBlogPostMetadata().getHtmlFile();
+				if (blogHtmlFile != null) {
+					blogHtmlFile.delete();
 				}
 			}
 		});
-
-		return p;
-	}
-
-	private void handleEDTException(Exception e) {
-		//TODO redirect stdout/stderr to UI console
-		e.printStackTrace();
-		// show error message in textarea
-		StringWriter sw = new StringWriter(1024);
-		sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
-		e.printStackTrace(new PrintWriter(sw));
-		UiUtils.showTextInTextareaDialog(this, sw.toString(), "Exception stack",
-				JOptionPane.ERROR_MESSAGE);
 	}
 
 	private void fillOneLineComponents(final JPanel p, final GBC gbc, final Component... comps) {
@@ -187,27 +172,11 @@ class BloggerClientFrame extends JFrame {
 		}
 		else {
 			for (Component comp : comps) {
-				p.add(comp,
-						gbc == null ? new GBC(gridx++, gridy, 1, 1).setFill(GBC.HORIZONTAL).setInsets(insets)
-								: gbc);
+				p.add(comp, gbc == null ? new GBC(gridx++, gridy, 1, 1).setFill(GBC.HORIZONTAL)
+						.setInsets(insets) : gbc);
 			}
 		}
 		atomicGridy.addAndGet(1);
-	}
-
-	private boolean verifyDesktopOpen() {
-		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-			return true;
-		}
-		else {
-			String message = "File can't be opened by system default viewer, so html can't be previewed."
-					+ " If you are running Linux,"
-					+ " try to read http://zenzhong8383.blogspot.com/2013/05/enable-java-awt-desktop-on-linux-en.html"
-					+ " to solve it.";
-			UiUtils.showTextInTextareaDialog(this, message, "Desktop open doesn't work",
-					JOptionPane.ERROR_MESSAGE);
-			return false;
-		}
 	}
 
 }

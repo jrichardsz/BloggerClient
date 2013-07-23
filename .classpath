@@ -21,5 +21,7 @@
 	<classpathentry kind="lib" path="libs/xpp3-1.1.4c.jar" sourcepath="libs-sources/xpp3-1.1.4c-sources.jar"/>
 	<classpathentry kind="lib" path="libs/jetty-6.1.26.jar"/>
 	<classpathentry kind="lib" path="libs/jetty-util-6.1.26.jar"/>
+	<classpathentry kind="lib" path="libs/commons-codec-1.7.jar"/>
+	<classpathentry kind="lib" path="libs/javax.servlet.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

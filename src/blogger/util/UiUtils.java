@@ -3,12 +3,16 @@ package blogger.util;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+
+import blogger.BloggerClient;
 
 public class UiUtils {
 
@@ -45,6 +49,16 @@ public class UiUtils {
 				}
 			}
 		}
+	}
+
+	public static void handleEDTException(Component parentComponent, Exception e) {
+		e.printStackTrace();
+		// show error message in textarea
+		StringWriter sw = new StringWriter(1024);
+		sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
+		e.printStackTrace(new PrintWriter(sw));
+		showTextInTextareaDialog(parentComponent, sw.toString(), "Exception stack",
+				JOptionPane.ERROR_MESSAGE);
 	}
 
 }

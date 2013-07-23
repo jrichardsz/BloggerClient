@@ -55,7 +55,7 @@ public class BlogPostMetadata {
 		return uniquetoken;
 	}
 
-	File getHtmlFile() {
+	public File getHtmlFile() {
 		return htmlFile;
 	}
 
@@ -63,7 +63,7 @@ public class BlogPostMetadata {
 		this.htmlFile = htmlFile;
 	}
 
-	String getHtmlBody() {
+	public String getHtmlBody() {
 		return htmlBody;
 	}
 

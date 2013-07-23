@@ -24,7 +24,7 @@ public class Configuration {
 			// generate configuration file
 			try (FileChannel in = new FileInputStream(new File(defaultCfgFileUri)).getChannel();
 					FileChannel out = new FileOutputStream(cfgFile).getChannel()) {
-				in.transferTo(0, Integer.MAX_VALUE, out);
+				in.transferTo(0, Long.MAX_VALUE, out);
 			}
 		}
 		else if (cfgFile.isDirectory()) {

@@ -10,11 +10,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-import blogger.BloggerClient.MacroRegion;
+import blogger.BlogPostProcessor.MacroRegion;
 import blogger.util.FileUtils;
 
-public class BloggerClientTest {
-	private static final BloggerClient client = BloggerClient.getInstance();
+public class BlogPostProcessorTest {
 	private static final String charsetName = "UTF-8";
 
 	@Test
@@ -24,7 +23,7 @@ public class BloggerClientTest {
 		try {
 			bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(
 					getTestBlogFile()), charsetName));
-			mbArray = client.readMetadataAndBody(bufferedReader);
+			mbArray = new BlogPostProcessor().readMetadataAndBody(bufferedReader);
 		}
 		finally {
 			if (bufferedReader != null)
@@ -44,22 +43,24 @@ public class BloggerClientTest {
 
 	@Test
 	public void processBlogFileTest() throws Exception {
-		BlogPostMetadata metadata = client.processBlogFile(getTestBlogFile(), charsetName);
+		BlogPostMetadata metadata = new BlogPostProcessor().processBlogFile(getTestBlogFile(),
+				charsetName);
 		System.out.println(metadata);
 		System.out.println(metadata.getHtmlBody());
 	}
 
 	@Test
 	public void generatePlainLinkTest() {
-		StringBuilder str = new StringBuilder("abchttp://test.com <a href=\"http://a.b.cn\">a.b.cn</a>def");
+		StringBuilder str = new StringBuilder(
+				"abchttp://test.com <a href=\"http://a.b.cn\">a.b.cn</a>def");
 		System.out.println(str);
-		client.generatePlainLink(str);
+		new BlogPostProcessor().generatePlainLink(str);
 		System.out.println(str);
 	}
 
 	@Test
 	public void getMacroRegionListTest() throws IOException {
-		List<MacroRegion> mrList = client.getMacroRegionList(FileUtils
+		List<MacroRegion> mrList = new BlogPostProcessor().getMacroRegionList(FileUtils
 				.readPackageFileAsText("blogger/test-zh.txt"));
 		for (MacroRegion mr : mrList) {
 			System.out.println(mr);
