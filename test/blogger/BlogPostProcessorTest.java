@@ -1,10 +1,7 @@
 package blogger;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -18,17 +15,8 @@ public class BlogPostProcessorTest {
 
 	@Test
 	public void readMetadataAndBodyTest() throws IOException, URISyntaxException {
-		BufferedReader bufferedReader = null;
-		StringBuilder[] mbArray;
-		try {
-			bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(
-					getTestBlogFile()), charsetName));
-			mbArray = new BlogPostProcessor().readMetadataAndBody(bufferedReader);
-		}
-		finally {
-			if (bufferedReader != null)
-				bufferedReader.close();
-		}
+		StringBuilder[] mbArray = new BlogPostProcessor().readMetadataAndBody(getTestBlogFile(),
+				charsetName);
 		System.out.println("========== metadata ============");
 		System.out.println(mbArray[0]);
 		System.out.println("========== body ============");
@@ -36,9 +24,7 @@ public class BlogPostProcessorTest {
 	}
 
 	private File getTestBlogFile() throws URISyntaxException {
-		java.net.URL url = getClass().getResource("test-zh.txt");
-		File blogFile = new File(url.toURI());
-		return blogFile;
+		return new File(getClass().getResource("test-zh.txt").toURI());
 	}
 
 	@Test

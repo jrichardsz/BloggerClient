@@ -45,7 +45,14 @@ public class BloggerClient {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				INSTANCE.createAndShowGUI();
+				try {
+					INSTANCE.createAndShowGUI();
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+					JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					System.exit(1);
+				}
 			}
 		});
 	}
@@ -74,7 +81,7 @@ public class BloggerClient {
 		return INSTANCE;
 	}
 
-	private void createAndShowGUI() {
+	private void createAndShowGUI() throws Exception {
 		final BloggerClientFrame frame = new BloggerClientFrame(NAME);
 		frame.setSize(900, 900);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

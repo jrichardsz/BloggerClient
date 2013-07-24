@@ -61,4 +61,10 @@ public class UiUtils {
 				JOptionPane.ERROR_MESSAGE);
 	}
 
+	public static void setEnabled(boolean b, Component... components) {
+		for (Component component : components) {
+			component.setEnabled(b);
+		}
+	}
+
 }

@@ -39,16 +39,40 @@ public class LocalDataManager {
 		return dir;
 	}
 
-	public File getUserDir(String userId) {
-		File dir = new File(getUsersDir(), userId);
+	public File getUserDir(String username) {
+		File dir = new File(getUsersDir(), username);
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
 		return dir;
 	}
 
-	public File getCredentialStoreFile(String userId) {
-		return new File(getUserDir(userId), "credential_store");
+	public File getCredentialStoreFile(String username) {
+		return new File(getUserDir(username), "credential_store");
+	}
+
+	public File getBlogsDir(String username) {
+		File dir = new File(getUserDir(username), "blogs");
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+		return dir;
+	}
+
+	public File getBlogsCacheFile(String username) {
+		return new File(getBlogsDir(username), "blogs_cache");
+	}
+
+	public File getBlogDir(String username, String blogId) {
+		File dir = new File(getBlogsDir(username), blogId);
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+		return dir;
+	}
+
+	public File getPostsCacheFile(String username, String blogId) {
+		return new File(getBlogDir(username, blogId), "posts_cache");
 	}
 
 }

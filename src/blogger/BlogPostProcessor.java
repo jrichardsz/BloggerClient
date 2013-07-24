@@ -42,40 +42,9 @@ public class BlogPostProcessor {
 		});
 	}
 
-	/*
-	article metadata must be put at the second line of article,
-	since Java won't remove Unicode BOM, so ignore the first line.
-
-	format:
-	<metadata>
-	title = {title} / title = {title} || {title-for-permalink}
-	tags = {tag}, {tag}
-	locale = 
-	</metadata>
-
-	header format:
-	= headerText || headerIdForAnchor =
-	could be several '='
-	headerIdForAnchor could be [a-zA-Z0-9-_. ]
-	e.g:
-	= 标题 1 || header-1 =
-	== 标题 1.1 ==
-	== title 1.2 || ==
-	== title 1.3 ==
-	*/
 	public BlogPostMetadata processBlogFile(final File blogFile, final String charsetName) throws Exception {
 		System.out.println(String.format("processBlogFile> file=%s", blogFile));
-		BufferedReader bufferedReader = null;
-		StringBuilder[] mbArray;
-		try {
-			bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(blogFile),
-					charsetName));
-			mbArray = readMetadataAndBody(bufferedReader);
-		}
-		finally {
-			if (bufferedReader != null)
-				bufferedReader.close();
-		}
+		final StringBuilder[] mbArray = readMetadataAndBody(blogFile, charsetName);
 		final StringBuilder metadataStr = mbArray[0], body = mbArray[1];
 		blogPostMetadata = parseBlogPostMetadata(metadataStr);
 		StringUtils.replaceAllStr(body, "\r\n", "\n");
@@ -124,31 +93,36 @@ public class BlogPostProcessor {
 	/**
 	 * @return metadata-body array
 	 */
-	StringBuilder[] readMetadataAndBody(final BufferedReader bufferedReader) throws IOException {
-		StringBuilder[] mb = new StringBuilder[2];
-		String line;
+	StringBuilder[] readMetadataAndBody(final File blogFile, final String charsetName)
+			throws IOException {
+		final StringBuilder[] mb = new StringBuilder[2];
 		final StringBuilder metadata = new StringBuilder(1024), body = new StringBuilder(8192);
+		String line;
 		final int beforeMetadata = 1, inMetadata = 2, afterMetadata = 3;
 		int state = beforeMetadata;
-		LogicAssert.assertTrue(bufferedReader.readLine() != null, "file is empty");
-		while ((line = bufferedReader.readLine()) != null) {
-			switch (state) {
-			case beforeMetadata:
-				LogicAssert.assertTrue(line.equals("<metadata>"),
-						"<metadata> not found at the second line, line=%s", line);
-				state = inMetadata;
-				break;
-			case inMetadata:
-				if (!line.equals("</metadata>"))
-					metadata.append(line).append('\n');
-				else
-					state = afterMetadata;
-				break;
-			case afterMetadata:
-				body.append(line).append('\n');
-				break;
-			default:
-				LogicAssert.assertTrue(false, "unknown state=" + state);
+		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+				new FileInputStream(blogFile), charsetName))) {
+			line = bufferedReader.readLine(); // read first line and ignore
+			LogicAssert.assertTrue(line != null, "file is empty");
+			while ((line = bufferedReader.readLine()) != null) {
+				switch (state) {
+				case beforeMetadata:
+					LogicAssert.assertTrue(line.equals("<metadata>"),
+							"<metadata> not found at the second line, line=%s", line);
+					state = inMetadata;
+					break;
+				case inMetadata:
+					if (!line.equals("</metadata>"))
+						metadata.append(line).append('\n');
+					else
+						state = afterMetadata;
+					break;
+				case afterMetadata:
+					body.append(line).append('\n');
+					break;
+				default:
+					LogicAssert.assertTrue(false, "unknown state=" + state);
+				}
 			}
 		}
 		LogicAssert.assertTrue(state == afterMetadata, "</metadata> not found, state=%d", state);

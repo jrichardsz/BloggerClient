@@ -2,8 +2,6 @@ package blogger;
 
 import java.awt.Color;
 import java.awt.GridBagLayout;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -219,15 +217,9 @@ public class EncryptedCredentialStore implements CredentialStore {
 				label.setForeground(Color.RED);
 				panel.add(label, new GBC(0, 3, 2, 2).setFill(GBC.HORIZONTAL).setInsets(distance));
 			}
-			panel.addComponentListener(new ComponentAdapter() {
-				@Override
-				public void componentShown(ComponentEvent e) {
-					pwdField.requestFocusInWindow();
-				}
-			});
 			final Object[] options = new Object[] { "   OK   ", " Cancel " };
 			final int selection = JOptionPane.showOptionDialog(null, panel, "Credential Store Password",
-					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, null);
 			if (selection == JOptionPane.YES_OPTION) {
 				if (!keyExists) {
 					char[] pwd = pwdField.getPassword(), pwdRepeat = pwdRepeatField.getPassword();
@@ -250,7 +242,8 @@ public class EncryptedCredentialStore implements CredentialStore {
 				}
 			}
 			else {
-				throw new RuntimeException("user canceled credential password input");
+				errorMessage = "Must input password.";
+				continue;
 			}
 		}
 	}
