@@ -23,16 +23,28 @@ public class PostListMemoryStore {
 	/** map<post ID, Post> */
 	private final HashMap<String, Post> idIndex = new HashMap<>(initialCapacity);
 
-	public PostListMemoryStore() {
+	private final String username, blogId;
+
+	public PostListMemoryStore(String username, String blogId) throws IllegalArgumentException {
+		if (username == null) {
+			throw new IllegalArgumentException("username is null");
+		}
+		if (blogId == null) {
+			throw new IllegalArgumentException("blogId is null");
+		}
 		postList.setItems(new ArrayList<Post>(initialCapacity));
+		this.username = username;
+		this.blogId = blogId;
 	}
 
 	/**
-	 * add a post to store, post could already exist in store
-	 * @param post a com.google.api.services.blogger.model.Post
+	 * add a post to store, post could already exist in store.<br/>
+	 * It's atomic.
+	 * 
+	 * @param post
+	 *          a com.google.api.services.blogger.model.Post
 	 */
 	public synchronized void add(Post post) {
-		// atomic
 		final String uniquetoken = BloggerUtils.getPostUrlUniquetoken(post.getUrl());
 		Post oldPost = uniquetokenIndex.get(uniquetoken);
 		if (oldPost != null) {
@@ -62,22 +74,22 @@ public class PostListMemoryStore {
 		}
 	}
 
-	private File getPostsCacheFile(String username, String blogId) {
+	private File getPostsCacheFile() {
 		return LocalDataManager.getInstance().getPostsCacheFile(username, blogId);
 	}
 
-	public synchronized void parseJsonFromFile(String username, String blogId) throws IOException {
-		File file = getPostsCacheFile(username, blogId);
+	public synchronized void parseFromFile() throws IOException {
+		File file = getPostsCacheFile();
 		if (file.exists()) {
 			PostList tempPostList = new PostList();
 			tempPostList.setItems(new ArrayList<Post>(initialCapacity));
-			BloggerUtils.parseJsonFromFile(file, tempPostList);
+			BloggerUtils.parseJsonFromFile(tempPostList, file);
 			addAll(tempPostList.getItems());
 		}
 	}
 
-	public synchronized void serializeJsonToFile(String username, String blogId) throws IOException {
-		File file = getPostsCacheFile(username, blogId);
+	public synchronized void serializeToFile() throws IOException {
+		File file = getPostsCacheFile();
 		if (file.exists())
 			BloggerUtils.serializeJsonToFile(postList, file);
 	}
@@ -96,6 +108,11 @@ public class PostListMemoryStore {
 
 	public synchronized Post getByUniquetoken(String uniquetoken) {
 		return uniquetokenIndex.get(uniquetoken);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("PostListMemoryStore [username=%s, blogId=%s]", username, blogId);
 	}
 
 }

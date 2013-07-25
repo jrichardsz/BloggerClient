@@ -60,9 +60,10 @@ public class HtmlUtils {
 	private static final Pattern HTML_ELEMENT_ID_PATTERN = Pattern
 			.compile("^[a-z0-9][a-z0-9-_]*[a-z0-9]$");
 
-	public static void verifyHtmlElementId(String httpElementId) {
-		LogicAssert.assertTrue(HTML_ELEMENT_ID_PATTERN.matcher(httpElementId).matches(),
-				"invalid httpElementId=%s", httpElementId);
+	public static void verifyHtmlElementId(String httpElementId) throws IllegalArgumentException {
+		if (!HTML_ELEMENT_ID_PATTERN.matcher(httpElementId).matches()) {
+			throw new IllegalArgumentException(String.format("invalid httpElementId=%s", httpElementId));
+		}
 	}
 
 }

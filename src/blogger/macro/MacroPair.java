@@ -39,13 +39,13 @@ public abstract class MacroPair {
 	 */
 	public String getHtml(String embededStr) throws Exception {
 		StringBuilder result = new StringBuilder();
-		String firstStr = first.getHtml();
-		LogicAssert.assertTrue(firstStr != null, "html is null, macro=%s", first);
-		result.append(firstStr);
+		String firstHtml = first.getHtml();
+		LogicAssert.assertTrue(firstHtml != null, "html is null, macro=%s", first);
+		result.append(firstHtml);
 		result.append(embededStr);
-		String secondStr = second.getHtml();
-		LogicAssert.assertTrue(secondStr != null, "html is null, macro=%s", second);
-		result.append(secondStr);
+		String secondHtml = second.getHtml();
+		LogicAssert.assertTrue(secondHtml != null, "html is null, macro=%s", second);
+		result.append(secondHtml);
 		return result.toString();
 	}
 

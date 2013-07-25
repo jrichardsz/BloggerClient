@@ -42,7 +42,7 @@ class RemotePanel extends JPanel {
 	private String username;
 	private Blogger blogger;
 	private Blog blog;
-	private final PostListMemoryStore postListStore = new PostListMemoryStore();
+	private PostListMemoryStore postListStore;
 
 	public RemotePanel(BloggerClientFrame frame) throws Exception {
 		this.frame = frame;
@@ -55,16 +55,23 @@ class RemotePanel extends JPanel {
 		bStart.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				try {
+				if (username == null) {
 					String[] usernames = LocalDataManager.getInstance().getUsersDir().list();
+					//TODO support several users, the first user is picked for now
 					username = (usernames == null ? showUsernameInputDialog() : usernames[0]);
 					LocalDataManager.getInstance().getUserDir(username).mkdirs();
+				}
+				try {
 					blogger = BloggerAPIBuilder.getInstance(username).getBlogger();
-					self.start();
 				}
 				catch (IOException | GeneralSecurityException ex) {
 					ex.printStackTrace();
+					String message = String.format("Connect to server failed, try to enable proxy at %s",
+							LocalDataManager.getInstance().getConfFile());
+					JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
+					return;
 				}
+				self.start();
 			}
 		});
 	}
@@ -116,7 +123,8 @@ class RemotePanel extends JPanel {
 		});
 
 		new SwingWorker<Integer, Void>() {
-			final int retSucceed = 0, retLoadBlogsFailed = 1, retNoBlogs = 2;
+			private final int retSucceed = 0, retLoadBlogsFailed = 1, retNoBlogs = 2;
+			private static final String REQ_POSTLIST_FIELDS = "items(id,title,url,labels,published)";
 
 			@Override
 			protected Integer doInBackground() throws Exception {
@@ -129,7 +137,7 @@ class RemotePanel extends JPanel {
 				final File blogsCacheFile = LocalDataManager.getInstance().getBlogsCacheFile(username);
 				if (blogsCacheFile.exists()) {
 					try {
-						BloggerUtils.parseJsonFromFile(blogsCacheFile, blogList);
+						BloggerUtils.parseJsonFromFile(blogList, blogsCacheFile);
 						System.out.println("blogs count (from local): " + blogList.getItems().size());
 					}
 					catch (IOException e) {
@@ -157,13 +165,15 @@ class RemotePanel extends JPanel {
 				}
 
 				// select blog
+				//TODO one user could create many blogs, the first one will be used for now
 				Blog blog = blogList.getItems().get(0);
 				self.blog = blog;
 
 				// load posts
-				final PostListMemoryStore postListStore = self.postListStore;
+				final PostListMemoryStore postListStore = self.postListStore = new PostListMemoryStore(
+						username, blog.getId());
 				try {
-					postListStore.parseJsonFromFile(username, blog.getId());
+					postListStore.parseFromFile();
 					System.out.println("posts count (from local): " + postListStore.size());
 				}
 				catch (IOException e) {
@@ -171,16 +181,16 @@ class RemotePanel extends JPanel {
 					postListStore.clear();
 				}
 				if (postListStore.isEmpty()) {
-					final String fields = "items(id,title,url,labels,published)";
-					List<Post> posts = blogger.posts().list(blog.getId()).setFields(fields)
+					List<Post> posts = blogger.posts().list(blog.getId()).setFields(REQ_POSTLIST_FIELDS)
 							.setMaxResults(maxResults).execute().getItems();
 					while (posts != null && !posts.isEmpty()) {
 						postListStore.addAll(posts);
-						posts = blogger.posts().list(blog.getId()).setFields(fields).setMaxResults(maxResults)
-								.setEndDate(posts.get(posts.size() - 1).getPublished()).execute().getItems();
+						posts = blogger.posts().list(blog.getId()).setFields(REQ_POSTLIST_FIELDS)
+								.setMaxResults(maxResults).setEndDate(posts.get(posts.size() - 1).getPublished())
+								.execute().getItems();
 					}
 					System.out.println("posts count (from remote): " + postListStore.size());
-					postListStore.serializeJsonToFile(username, blog.getId());
+					postListStore.serializeToFile();
 				}
 				return retSucceed;
 			}
@@ -258,6 +268,8 @@ class RemotePanel extends JPanel {
 		return blog != null;
 	}
 
+	private static final String REQ_POST_FIELDS = "id,title,url,labels,published";
+
 	/**
 	 * It will access network, do not invoke it in UI thread.
 	 */
@@ -271,13 +283,13 @@ class RemotePanel extends JPanel {
 			if (selection == JOptionPane.YES_OPTION) {
 				Post toBeCreatedPost = BloggerUtils.getPostObjForCreate(blog.getUrl(), metadata);
 				Post createdPost = self.blogger.posts().insert(blog.getId(), toBeCreatedPost)
-						.setFields("id,title,url,labels,published").execute();
+						.setFields(REQ_POST_FIELDS).execute();
 				System.out.println(createdPost.toPrettyString());
 				LogicAssert.assertTrue(toBeCreatedPost.getUrl().equals(createdPost.getUrl()),
 						"urls don't match, expect [%s], got [%s]", toBeCreatedPost.getUrl(),
 						createdPost.getUrl());
 				postListStore.add(createdPost);
-				postListStore.serializeJsonToFile(username, blog.getId());
+				postListStore.serializeToFile();
 			}
 		}
 		else {
@@ -288,10 +300,10 @@ class RemotePanel extends JPanel {
 			if (selection == JOptionPane.YES_OPTION) {
 				Post updatePost = self.blogger.posts()
 						.patch(blog.getId(), existingPost.getId(), BloggerUtils.getPostObjForUpdate(metadata))
-						.setFields("id,title,url,labels,published").execute();
+						.setFields(REQ_POST_FIELDS).execute();
 				System.out.println(updatePost.toPrettyString());
 				postListStore.add(updatePost);
-				postListStore.serializeJsonToFile(username, blog.getId());
+				postListStore.serializeToFile();
 			}
 		}
 	}

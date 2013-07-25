@@ -81,8 +81,8 @@ public class MacroFactory {
 		String macroName = macro.getName();
 		LogicAssert.assertTrue(Macro.MACRO_PATTERN.matcher(macroName).matches(),
 				"invalid macro name=%s, %s", macroName, macro);
-		LogicAssert.assertTrue(!MACRO_STORE.containsKey(macroName), "macro name is already registered",
-				macroName);
+		LogicAssert.assertTrue(!MACRO_STORE.containsKey(macroName),
+				"macro name [%s] is already registered", macroName);
 		MACRO_STORE.put(macroName, macro);
 	}
 

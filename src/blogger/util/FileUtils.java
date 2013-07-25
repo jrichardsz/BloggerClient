@@ -37,18 +37,12 @@ public class FileUtils {
 	 */
 	public static List<String> readPackageFileAsLines(final String name) throws IOException {
 		final List<String> result = new ArrayList<>();
-		BufferedReader bufferedReader = null;
-		try {
-			bufferedReader = new BufferedReader(new InputStreamReader(FileUtils.class.getClassLoader()
-					.getResourceAsStream(name), "UTF-8"));
+		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(FileUtils.class
+				.getClassLoader().getResourceAsStream(name), "UTF-8"))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				result.add(line);
 			}
-		}
-		finally {
-			if (bufferedReader != null)
-				bufferedReader.close();
 		}
 		return result;
 	}
@@ -68,19 +62,13 @@ public class FileUtils {
 	 */
 	public static StringBuilder readPackageFileAsText(final String name) throws IOException {
 		final StringBuilder result = new StringBuilder(1024);
-		BufferedReader bufferedReader = null;
-		try {
-			bufferedReader = new BufferedReader(new InputStreamReader(FileUtils.class.getClassLoader()
-					.getResourceAsStream(name), "UTF-8"));
+		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(FileUtils.class
+				.getClassLoader().getResourceAsStream(name), "UTF-8"))) {
 			final char[] cbuf = new char[1024];
 			int len;
 			while ((len = bufferedReader.read(cbuf)) >= 0) {
 				result.append(cbuf, 0, len);
 			}
-		}
-		finally {
-			if (bufferedReader != null)
-				bufferedReader.close();
 		}
 		return result;
 	}

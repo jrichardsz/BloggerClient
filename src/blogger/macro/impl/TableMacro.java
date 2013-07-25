@@ -44,14 +44,19 @@ public class TableMacro extends MacroPair {
 		int columnCnt = -1;
 		while ((line = br.readLine()) != null) {
 			final String[] ss = line.split("\\|\\|");
-			if (columnCnt > 0)
+			if (columnCnt >= 0) {
 				LogicAssert.assertTrue(columnCnt == ss.length,
-						"column count doesn't match, current line=%s, cnt=%d", line, ss.length);
+						"column count doesn't match, current line=%s, count=%d, expetect count=%d", line,
+						ss.length, columnCnt);
+			}
 			result.append("<tr>");
 			for (String s : ss) {
 				result.append("<td>").append(s.trim()).append("</td>");
 			}
 			result.append("</tr>");
+			if (columnCnt < 0) {
+				columnCnt = ss.length;
+			}
 		}
 		br.close();
 		result.append("</table>\n");
