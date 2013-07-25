@@ -24,7 +24,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
-import blogger.BlogPostMetadata;
+import blogger.BlogPostInfoHolder;
 import blogger.BlogPostProcessor;
 import blogger.util.FileUtils;
 import blogger.util.UiUtils;
@@ -122,27 +122,27 @@ class MainPanel extends JPanel {
 				final String blogFilePath = tfPostFile.getText().trim();
 				if (blogFilePath.isEmpty())
 					return;
-				new SwingWorker<BlogPostMetadata, Void>() {
+				new SwingWorker<BlogPostInfoHolder, Void>() {
 					@Override
-					protected BlogPostMetadata doInBackground() throws Exception {
-						File blogFile = FileUtils.getFileByPathOrURI(blogFilePath);
+					protected BlogPostInfoHolder doInBackground() throws Exception {
+						File postFile = FileUtils.getFileByPathOrURI(blogFilePath);
 						String charsetName = tfCharset.getText().trim();
 						if (charsetName.isEmpty())
 							charsetName = DEFAULT_CHARSET_NAME;
-						BlogPostProcessor blogPostProcessor = new BlogPostProcessor();
+						BlogPostProcessor blogPostProcessor = new BlogPostProcessor(postFile, charsetName);
 						blogPostProcessorRef.set(blogPostProcessor);
-						return blogPostProcessor.processBlogFile(blogFile, charsetName);
+						return blogPostProcessor.processPostFile();
 					}
 
 					@Override
 					protected void done() {
 						try {
-							BlogPostMetadata metadata = get();
-							tfTitle.setText(metadata.getTitle());
-							tfTags.setText(metadata.getTags());
-							tfUniquetoken.setText(metadata.getUniquetoken());
-							taBodyHtml.setText(metadata.getHtmlBody());
-							Desktop.getDesktop().open(metadata.getHtmlFile());
+							BlogPostInfoHolder holder = get();
+							tfTitle.setText(holder.getTitle());
+							tfTags.setText(holder.getTags());
+							tfUniquetoken.setText(holder.getUniquetoken());
+							taBodyHtml.setText(holder.getHtmlBody());
+							Desktop.getDesktop().open(holder.getHtmlFile());
 						}
 						catch (Exception e) {
 							UiUtils.handleEDTException(frame, e);
@@ -164,14 +164,14 @@ class MainPanel extends JPanel {
 					final BlogPostProcessor blogPostProcessor = blogPostProcessorRef.get();
 					if (blogPostProcessor == null)
 						return;
-					final BlogPostMetadata metadata = blogPostProcessor.getBlogPostMetadata();
-					if (metadata.getHtmlBody() == null)
+					final BlogPostInfoHolder blogPostInfoHolder = blogPostProcessor.getBlogPostInfoHolder();
+					if (blogPostInfoHolder.getHtmlBody() == null)
 						return;
 					UiUtils.setEnabled(false, bChoose, bProcess, bPost, bClose);
 					new SwingWorker<Void, Void>() {
 						@Override
 						protected Void doInBackground() throws Exception {
-							remotePanel.post(metadata);
+							remotePanel.post(blogPostInfoHolder);
 							return null;
 						}
 
@@ -203,7 +203,7 @@ class MainPanel extends JPanel {
 				tfUniquetoken.setText("");
 				taBodyHtml.setText("");
 				if (blogPostProcessorRef.get() != null) {
-					File blogHtmlFile = blogPostProcessorRef.get().getBlogPostMetadata().getHtmlFile();
+					File blogHtmlFile = blogPostProcessorRef.get().getBlogPostInfoHolder().getHtmlFile();
 					if (blogHtmlFile != null) {
 						blogHtmlFile.delete();
 					}

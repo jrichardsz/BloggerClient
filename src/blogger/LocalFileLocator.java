@@ -2,14 +2,14 @@ package blogger;
 
 import java.io.File;
 
-public class LocalDataManager {
+public class LocalFileLocator {
 
-	private static final LocalDataManager INSTANCE = new LocalDataManager();
+	private static final LocalFileLocator INSTANCE = new LocalFileLocator();
 
-	private LocalDataManager() {
+	private LocalFileLocator() {
 	}
 
-	public static LocalDataManager getInstance() {
+	public static LocalFileLocator getInstance() {
 		return INSTANCE;
 	}
 

@@ -11,28 +11,32 @@ import blogger.BlogPostProcessor.MacroRegion;
 import blogger.util.FileUtils;
 
 public class BlogPostProcessorTest {
-	private static final String charsetName = "UTF-8";
+	private final BlogPostProcessor blogPostProcessor = new BlogPostProcessor(getTestPostFile(),
+			"UTF-8");
 
 	@Test
 	public void readMetadataAndBodyTest() throws IOException, URISyntaxException {
-		StringBuilder[] mbArray = new BlogPostProcessor().readMetadataAndBody(getTestBlogFile(),
-				charsetName);
+		StringBuilder[] mbArray = blogPostProcessor.readMetadataAndBody();
 		System.out.println("========== metadata ============");
 		System.out.println(mbArray[0]);
 		System.out.println("========== body ============");
 		System.out.println(mbArray[1]);
 	}
 
-	private File getTestBlogFile() throws URISyntaxException {
-		return new File(getClass().getResource("test-zh.txt").toURI());
+	private File getTestPostFile() {
+		try {
+			return new File(getClass().getResource("test-zh.txt").toURI());
+		}
+		catch (URISyntaxException e) {
+			throw new RuntimeException("local post file failed", e);
+		}
 	}
 
 	@Test
 	public void processBlogFileTest() throws Exception {
-		BlogPostMetadata metadata = new BlogPostProcessor().processBlogFile(getTestBlogFile(),
-				charsetName);
-		System.out.println(metadata);
-		System.out.println(metadata.getHtmlBody());
+		BlogPostInfoHolder holder = blogPostProcessor.processPostFile();
+		System.out.println(holder);
+		System.out.println(holder.getHtmlBody());
 	}
 
 	@Test
@@ -40,13 +44,13 @@ public class BlogPostProcessorTest {
 		StringBuilder str = new StringBuilder(
 				"abchttp://test.com <a href=\"http://a.b.cn\">a.b.cn</a>def");
 		System.out.println(str);
-		new BlogPostProcessor().generatePlainLink(str);
+		blogPostProcessor.generatePlainLink(str);
 		System.out.println(str);
 	}
 
 	@Test
 	public void getMacroRegionListTest() throws IOException {
-		List<MacroRegion> mrList = new BlogPostProcessor().getMacroRegionList(FileUtils
+		List<MacroRegion> mrList = blogPostProcessor.getMacroRegionList(FileUtils
 				.readPackageFileAsText("blogger/test-zh.txt"));
 		for (MacroRegion mr : mrList) {
 			System.out.println(mr);

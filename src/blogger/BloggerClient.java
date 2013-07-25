@@ -32,7 +32,7 @@ public class BloggerClient {
 		}
 		//
 		try {
-			Configuration cfg = new Configuration(LocalDataManager.getInstance().getConfFile(),
+			Configuration cfg = new Configuration(LocalFileLocator.getInstance().getConfFile(),
 					BloggerClient.class.getResource("conf.properties").toURI());
 			ProxySelector.setDefault(cfg.getProxySelector());
 		}

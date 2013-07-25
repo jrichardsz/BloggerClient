@@ -75,7 +75,7 @@ public class PostListMemoryStore {
 	}
 
 	private File getPostsCacheFile() {
-		return LocalDataManager.getInstance().getPostsCacheFile(username, blogId);
+		return LocalFileLocator.getInstance().getPostsCacheFile(username, blogId);
 	}
 
 	public synchronized void parseFromFile() throws IOException {

@@ -26,14 +26,21 @@ import blogger.util.PureStack;
 import blogger.util.StringUtils;
 
 public class BlogPostProcessor {
+	private final File postFile;
+	private final String charsetName;
 
-	public BlogPostProcessor() {
+	private final BlogPostInfoHolder blogPostInfoHolder;
+
+	public BlogPostProcessor(final File postFile, final String charsetName) {
+		this.postFile = postFile;
+		this.charsetName = charsetName;
+		this.blogPostInfoHolder = new BlogPostInfoHolder(postFile, charsetName);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				BlogPostMetadata md = getBlogPostMetadata();
-				if (md != null) {
-					File file = md.getHtmlFile();
+				BlogPostInfoHolder holder = getBlogPostInfoHolder();
+				if (holder != null) {
+					File file = holder.getHtmlFile();
 					if (file != null && file.exists() && !file.delete()) {
 						System.out.println(String.format("delete [%s] failed", file));
 					}
@@ -42,17 +49,17 @@ public class BlogPostProcessor {
 		});
 	}
 
-	public BlogPostMetadata processBlogFile(final File blogFile, final String charsetName) throws Exception {
-		System.out.println(String.format("processBlogFile> file=%s", blogFile));
-		final StringBuilder[] mbArray = readMetadataAndBody(blogFile, charsetName);
+	public BlogPostInfoHolder processPostFile() throws Exception {
+		System.out.println(String.format("processPostFile> file=%s", postFile));
+		final StringBuilder[] mbArray = readMetadataAndBody();
 		final StringBuilder metadataStr = mbArray[0], body = mbArray[1];
-		blogPostMetadata = parseBlogPostMetadata(metadataStr);
+		parseBlogPostMetadata(metadataStr);
 		StringUtils.replaceAllStr(body, "\r\n", "\n");
 		StringUtils.replaceAllStr(body, "\r", "\n");
 		removeStartingEndingNewlines(body);
 		StringUtils.replaceCharToStr(body, '\t', "    "); // 4 white spaces
 		final ParsingContext parsingContext = new ParsingContext();
-		processBlogFile0(body, parsingContext);
+		processPostFile0(body, parsingContext);
 		expandSpecialMacros(body);
 
 		// add TOC to the beginning
@@ -78,30 +85,27 @@ public class BlogPostProcessor {
 		for (String assetRelativePath : parsingContext.assetRelativePathSet) {
 			body.insert(0, AssetsLoader.readAssetAsText(assetRelativePath));
 		}
-		blogPostMetadata.setHtmlFile(writeToBlogHtmlFile(body, blogFile.getParent(),
-				blogFile.getName(), charsetName));
-		blogPostMetadata.setHtmlBody(body.toString());
-		return blogPostMetadata;
+		blogPostInfoHolder.setHtmlFile(writeToPostHtmlFile(body, postFile.getParent(),
+				postFile.getName(), charsetName));
+		blogPostInfoHolder.setHtmlBody(body.toString());
+		return blogPostInfoHolder;
 	}
 
-	private BlogPostMetadata blogPostMetadata;
-
-	public BlogPostMetadata getBlogPostMetadata() {
-		return blogPostMetadata;
+	public BlogPostInfoHolder getBlogPostInfoHolder() {
+		return blogPostInfoHolder;
 	}
 
 	/**
 	 * @return metadata-body array
 	 */
-	StringBuilder[] readMetadataAndBody(final File blogFile, final String charsetName)
-			throws IOException {
+	StringBuilder[] readMetadataAndBody() throws IOException {
 		final StringBuilder[] mb = new StringBuilder[2];
 		final StringBuilder metadata = new StringBuilder(1024), body = new StringBuilder(8192);
 		String line;
 		final int beforeMetadata = 1, inMetadata = 2, afterMetadata = 3;
 		int state = beforeMetadata;
 		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
-				new FileInputStream(blogFile), charsetName))) {
+				new FileInputStream(postFile), charsetName))) {
 			line = bufferedReader.readLine(); // read first line and ignore
 			LogicAssert.assertTrue(line != null, "file is empty");
 			while ((line = bufferedReader.readLine()) != null) {
@@ -134,11 +138,10 @@ public class BlogPostProcessor {
 	/**
 	 * just split properties text
 	 */
-	private BlogPostMetadata parseBlogPostMetadata(final StringBuilder metadataStr)
-			throws IOException {
+	private void parseBlogPostMetadata(final StringBuilder metadataStr) throws IOException {
 		Properties props = new Properties();
 		props.load(new StringReader(metadataStr.toString()));
-		return new BlogPostMetadata(props.getProperty("title"), props.getProperty("tags"),
+		blogPostInfoHolder.setMetadata(props.getProperty("title"), props.getProperty("tags"),
 				props.getProperty("locale"));
 	}
 
@@ -176,7 +179,7 @@ public class BlogPostProcessor {
 		int processingNestedMacrosDepth = 0;
 	}
 
-	private void processBlogFile0(final StringBuilder body, final ParsingContext parsingContext)
+	private void processPostFile0(final StringBuilder body, final ParsingContext parsingContext)
 			throws Exception {
 		// replaceHtmlEntities for text that is outside of {{html}} and {{/html}}
 		{
@@ -201,13 +204,13 @@ public class BlogPostProcessor {
 			macroRegionList = null;
 		}
 		final List<MacroRegion> macroRegionList = getMacroRegionList(body);
-		StringBuilder newBody = processBlogFile00(body, macroRegionList, 0, macroRegionList.size() - 1,
+		StringBuilder newBody = processPostFile00(body, macroRegionList, 0, macroRegionList.size() - 1,
 				parsingContext);
 		body.setLength(0);
 		body.append(newBody);
 	}
 
-	private StringBuilder processBlogFile00(final StringBuilder body,
+	private StringBuilder processPostFile00(final StringBuilder body,
 			final List<MacroRegion> macroRegionList, final int listStartIndex, final int listEndIndex,
 			final ParsingContext parsingContext) throws Exception {
 		final StringBuilder newBody = new StringBuilder(listEndIndex == 0 ? body.length() : 128);
@@ -242,7 +245,7 @@ public class BlogPostProcessor {
 				}
 				else { // has nested macros
 					parsingContext.processingNestedMacrosDepth += 1;
-					StringBuilder embededStr = processBlogFile00(body, macroRegionList, macroRegion.index,
+					StringBuilder embededStr = processPostFile00(body, macroRegionList, macroRegion.index,
 							macroRegion.pairedMacroRegionIndex, parsingContext);
 					parsingContext.processingNestedMacrosDepth -= 1;
 					newBody.append(MacroFactory.getMacroPair(macro.getName()).getHtml(embededStr.toString()));
@@ -600,8 +603,8 @@ public class BlogPostProcessor {
 			// append current time millis to html elements id,
 			// since blog list page may include many TOC, it'll cause issue.
 			final StringBuilder tocHeadHtml = AssetsLoader.readAssetAsText("html/toc-head.html");
-			StringUtils.replaceFirstStr(tocHeadHtml, "${toc-title}",
-					blogPostMetadata.getLocale().equals("zh") ? "目录" : "Contents");
+			StringUtils.replaceFirstStr(tocHeadHtml, "${toc-title}", blogPostInfoHolder.getLocale()
+					.equals("zh") ? "目录" : "Contents");
 			toc.append(tocHeadHtml);
 
 			headersCnt = generateTOC(toc, headerMetadataList, 0, haveUnclosedLiOnLevels);
@@ -683,17 +686,16 @@ public class BlogPostProcessor {
 	}
 
 	/**
-	 * @return generated blog html file
+	 * @return generated post html file
 	 */
-	private File writeToBlogHtmlFile(StringBuilder body, String blogFileDir, String blogFileName,
+	private File writeToPostHtmlFile(StringBuilder body, String postFileDir, String postFileName,
 			String charsetName) throws IOException {
-		//TODO write file to specified dir
-		File blogHtmlFile = new File(blogFileDir, blogFileName + "-handled-blog-file.html");
+		File postHtmlFile = new File(postFileDir, postFileName + "-handled-post-file.html");
 		// won't check blogHtmlFile exist or not, just overwrite
-		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(blogHtmlFile))) {
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(postHtmlFile))) {
 			out.write(body.toString().getBytes(charsetName));
 		}
-		return blogHtmlFile;
+		return postHtmlFile;
 	}
 
 }

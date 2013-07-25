@@ -5,12 +5,26 @@ import java.io.File;
 import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
 
-public class BlogPostMetadata {
-	private final String title, tags, locale, uniquetoken;
+public class BlogPostInfoHolder {
+	private final File postFile;
+	private final String charsetName;
+
+	private String title, tags, locale, uniquetoken;
 	private File htmlFile;
 	private String htmlBody;
 
-	public BlogPostMetadata(String title, String tags, String locale) {
+	public BlogPostInfoHolder(final File postFile, final String charsetName) {
+		this.postFile = postFile;
+		this.charsetName = charsetName;
+	}
+
+	void setMetadata(String title, String tags, String locale) {
+		if (title == null || tags == null || locale == null) {
+			throw new IllegalArgumentException("metadata can't be null");
+		}
+		if (this.title != null || this.tags != null || this.locale != null) {
+			throw new IllegalStateException("metadata was setted before");
+		}
 		String enTitle;
 		if (title.indexOf("||") >= 0) {
 			String[] ss = title.split("\\|\\|");
@@ -34,6 +48,14 @@ public class BlogPostMetadata {
 		// in order to verify blanks by mistake
 		LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0, "invalid uniquetoken=%s", uniquetoken);
 		HtmlUtils.verifyHtmlElementId(uniquetoken);
+	}
+
+	public File getPostFile() {
+		return postFile;
+	}
+
+	public String getCharsetName() {
+		return charsetName;
 	}
 
 	public String getTitle() {
@@ -73,9 +95,12 @@ public class BlogPostMetadata {
 
 	@Override
 	public String toString() {
-		return String.format(
-				"BlogPostMetadata [title=%s, tags=%s, locale=%s, uniquetoken=%s, blogHtmlFile=%s]", title,
-				tags, locale, uniquetoken, htmlFile);
+		StringBuilder builder = new StringBuilder();
+		builder.append("BlogPostInfoHolder [postFile=").append(postFile).append(", charsetName=")
+				.append(charsetName).append(", title=").append(title).append(", tags=").append(tags)
+				.append(", locale=").append(locale).append(", uniquetoken=").append(uniquetoken)
+				.append("]");
+		return builder.toString();
 	}
 
 }

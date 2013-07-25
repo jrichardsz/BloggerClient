@@ -20,10 +20,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
-import blogger.BlogPostMetadata;
+import blogger.BlogPostInfoHolder;
 import blogger.BloggerAPIBuilder;
 import blogger.BloggerUtils;
-import blogger.LocalDataManager;
+import blogger.LocalFileLocator;
 import blogger.PostListMemoryStore;
 import blogger.util.UiUtils;
 
@@ -55,10 +55,10 @@ class RemotePanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (username == null) {
-					String[] usernames = LocalDataManager.getInstance().getUsersDir().list();
+					String[] usernames = LocalFileLocator.getInstance().getUsersDir().list();
 					//TODO support several users, the first user is picked for now
 					username = (usernames == null ? showUsernameInputDialog() : usernames[0]);
-					LocalDataManager.getInstance().getUserDir(username).mkdirs();
+					LocalFileLocator.getInstance().getUserDir(username).mkdirs();
 				}
 				try {
 					blogger = BloggerAPIBuilder.getInstance(username).getBlogger();
@@ -66,7 +66,7 @@ class RemotePanel extends JPanel {
 				catch (IOException | GeneralSecurityException ex) {
 					ex.printStackTrace();
 					String message = String.format("Connect to server failed, try to enable proxy at %s",
-							LocalDataManager.getInstance().getConfFile());
+							LocalFileLocator.getInstance().getConfFile());
 					JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
@@ -133,7 +133,7 @@ class RemotePanel extends JPanel {
 				// load blogs
 				BlogList blogList = new BlogList();
 				blogList.setItems(new ArrayList<Blog>());
-				final File blogsCacheFile = LocalDataManager.getInstance().getBlogsCacheFile(username);
+				final File blogsCacheFile = LocalFileLocator.getInstance().getBlogsCacheFile(username);
 				if (blogsCacheFile.exists()) {
 					try {
 						BloggerUtils.parseJsonFromFile(blogList, blogsCacheFile);
@@ -272,37 +272,37 @@ class RemotePanel extends JPanel {
 	/**
 	 * It will access network, do not invoke it in UI thread.
 	 */
-	void post(BlogPostMetadata metadata) throws IOException {
-		final Post existingPost = postListStore.getByUniquetoken(metadata.getUniquetoken());
+	void post(BlogPostInfoHolder holder) throws IOException {
+		final Post existingPost = postListStore.getByUniquetoken(holder.getUniquetoken());
 		if (existingPost == null) {
 			String message = String.format("[%s] is a new post, do you want to create it?",
-					metadata.getTitle());
+					holder.getTitle());
 			final int selection = JOptionPane.showConfirmDialog(null, message, "Create post",
 					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
 			if (selection == JOptionPane.YES_OPTION) {
-				insertPost(metadata);
+				insertPost(holder);
 			}
 		}
 		else {
 			String message = String.format("[%s] is an old post ( %s ), do you want to update it?",
-					metadata.getTitle(), existingPost.getUrl());
+					holder.getTitle(), existingPost.getUrl());
 			final int selection = JOptionPane.showConfirmDialog(null, message, "Update post",
 					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
 			if (selection == JOptionPane.YES_OPTION) {
-				patchPost(existingPost.getId(), metadata);
+				patchPost(existingPost.getId(), holder);
 			}
 		}
 	}
 
-	private void insertPost(BlogPostMetadata metadata) throws IOException {
+	private void insertPost(final BlogPostInfoHolder holder) throws IOException {
 		/*
 		 * can't custom permalink when inserting a post, workaround steps:
 		 * 1) insert a post, set title as unique token of permalink
 		 * 2) update tile to the real title
 		 */
 		//- insert post
-		Post toBeCreatedPost = BloggerUtils.getPostObjForCreate(blog.getUrl(), metadata);
-		toBeCreatedPost.setTitle(metadata.getUniquetoken());
+		Post toBeCreatedPost = BloggerUtils.getPostObjForCreate(blog.getUrl(), holder);
+		toBeCreatedPost.setTitle(holder.getUniquetoken());
 		Post createdPost = blogger.posts().insert(blog.getId(), toBeCreatedPost)
 				.setFields(REQ_POST_FIELDS).execute();
 		System.out.println(createdPost.toPrettyString());
@@ -315,17 +315,17 @@ class RemotePanel extends JPanel {
 		 * so update content and labels too.
 		 * It's allowed in document https://developers.google.com/blogger/docs/3.0/performance#patch
 		 */
-		Post updatedPost = patchPost(createdPost.getId(), metadata);
+		Post updatedPost = patchPost(createdPost.getId(), holder);
 		//- if the generated unique token is not the expected one, then accept it and update local metadata
-		if (!metadata.getUniquetoken().equals(
+		if (!holder.getUniquetoken().equals(
 				BloggerUtils.getPostUrlUniquetoken(updatedPost.getUrl()))) {
 			//TODO update local blog post file
 			
 		}
 	}
 
-	private Post patchPost(String postId, BlogPostMetadata metadata) throws IOException {
-		final Post toBeUpdatedPost = BloggerUtils.getPostObjForUpdate(metadata);
+	private Post patchPost(String postId, BlogPostInfoHolder holder) throws IOException {
+		final Post toBeUpdatedPost = BloggerUtils.getPostObjForUpdate(holder);
 		final Post updatedPost = blogger.posts().patch(blog.getId(), postId, toBeUpdatedPost)
 				.setFields(REQ_POST_FIELDS).execute();
 		System.out.println(updatedPost.toPrettyString());

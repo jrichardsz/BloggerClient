@@ -70,7 +70,7 @@ public class BloggerAPIBuilder {
 		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
 				new InputStreamReader(BloggerAPIBuilder.class.getResourceAsStream("client_secrets.json")));
 		// set up file credential store
-		CredentialStore credentialStore = new EncryptedCredentialStore(LocalDataManager.getInstance()
+		CredentialStore credentialStore = new EncryptedCredentialStore(LocalFileLocator.getInstance()
 				.getCredentialStoreFile(username));
 		// set up authorization code flow
 		GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT,

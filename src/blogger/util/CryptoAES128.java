@@ -13,6 +13,9 @@ public class CryptoAES128 {
 	private final byte[] keyBytes, ivBytes;
 
 	public CryptoAES128(byte[] keyBytes, byte[] ivBytes) {
+		if (keyBytes.length != 16 || ivBytes.length != 16) {
+			throw new IllegalArgumentException("param bytes length must be 16");
+		}
 		this.keyBytes = keyBytes;
 		this.ivBytes = ivBytes;
 	}

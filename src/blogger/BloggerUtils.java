@@ -61,14 +61,14 @@ public class BloggerUtils {
 		return postUrl.substring(postUrl.lastIndexOf('/') + 1, postUrl.lastIndexOf('.'));
 	}
 
-	public static Post getPostObjForCreate(String blogUrl, BlogPostMetadata metadata) {
+	public static Post getPostObjForCreate(String blogUrl, BlogPostInfoHolder holder) {
 		Post post = new Post();
-		post.setTitle(metadata.getTitle());
-		post.setContent(metadata.getHtmlBody());
+		post.setTitle(holder.getTitle());
+		post.setContent(holder.getHtmlBody());
 		// labels
 		{
 			List<String> labels = new ArrayList<>();
-			for (String label : metadata.getTags().split(",")) {
+			for (String label : holder.getTags().split(",")) {
 				label = label.trim();
 				if (!label.isEmpty()) {
 					labels.add(label);
@@ -84,21 +84,21 @@ public class BloggerUtils {
 				url.append('/');
 			}
 			url.append(new SimpleDateFormat("yyyy/MM/").format(System.currentTimeMillis()));
-			url.append(metadata.getUniquetoken());
+			url.append(holder.getUniquetoken());
 			url.append(".html");
 			post.setUrl(url.toString());
 		*/}
 		return post;
 	}
 
-	public static Post getPostObjForUpdate(BlogPostMetadata metadata) {
+	public static Post getPostObjForUpdate(BlogPostInfoHolder holder) {
 		Post post = new Post();
-		post.setTitle(metadata.getTitle());
-		post.setContent(metadata.getHtmlBody());
+		post.setTitle(holder.getTitle());
+		post.setContent(holder.getHtmlBody());
 		// labels
 		{
 			List<String> labels = new ArrayList<>();
-			for (String label : metadata.getTags().split(",")) {
+			for (String label : holder.getTags().split(",")) {
 				label = label.trim();
 				if (!label.isEmpty()) {
 					labels.add(label);
