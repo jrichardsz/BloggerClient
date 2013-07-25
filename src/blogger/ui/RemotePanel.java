@@ -25,7 +25,6 @@ import blogger.BloggerAPIBuilder;
 import blogger.BloggerUtils;
 import blogger.LocalDataManager;
 import blogger.PostListMemoryStore;
-import blogger.util.LogicAssert;
 import blogger.util.UiUtils;
 
 import com.google.api.services.blogger.Blogger;
@@ -124,7 +123,7 @@ class RemotePanel extends JPanel {
 
 		new SwingWorker<Integer, Void>() {
 			private final int retSucceed = 0, retLoadBlogsFailed = 1, retNoBlogs = 2;
-			private static final String REQ_POSTLIST_FIELDS = "items(id,title,url,labels,published)";
+			private static final String REQ_POSTLIST_FIELDS = "items(id,title,url,labels,published,updated)";
 
 			@Override
 			protected Integer doInBackground() throws Exception {
@@ -268,7 +267,7 @@ class RemotePanel extends JPanel {
 		return blog != null;
 	}
 
-	private static final String REQ_POST_FIELDS = "id,title,url,labels,published";
+	private static final String REQ_POST_FIELDS = "id,title,url,labels,published,updated";
 
 	/**
 	 * It will access network, do not invoke it in UI thread.
@@ -281,15 +280,7 @@ class RemotePanel extends JPanel {
 			final int selection = JOptionPane.showConfirmDialog(null, message, "Create post",
 					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
 			if (selection == JOptionPane.YES_OPTION) {
-				Post toBeCreatedPost = BloggerUtils.getPostObjForCreate(blog.getUrl(), metadata);
-				Post createdPost = self.blogger.posts().insert(blog.getId(), toBeCreatedPost)
-						.setFields(REQ_POST_FIELDS).execute();
-				System.out.println(createdPost.toPrettyString());
-				LogicAssert.assertTrue(toBeCreatedPost.getUrl().equals(createdPost.getUrl()),
-						"urls don't match, expect [%s], got [%s]", toBeCreatedPost.getUrl(),
-						createdPost.getUrl());
-				postListStore.add(createdPost);
-				postListStore.serializeToFile();
+				insertPost(metadata);
 			}
 		}
 		else {
@@ -298,14 +289,49 @@ class RemotePanel extends JPanel {
 			final int selection = JOptionPane.showConfirmDialog(null, message, "Update post",
 					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
 			if (selection == JOptionPane.YES_OPTION) {
-				Post updatePost = self.blogger.posts()
-						.patch(blog.getId(), existingPost.getId(), BloggerUtils.getPostObjForUpdate(metadata))
-						.setFields(REQ_POST_FIELDS).execute();
-				System.out.println(updatePost.toPrettyString());
-				postListStore.add(updatePost);
-				postListStore.serializeToFile();
+				patchPost(existingPost.getId(), metadata);
 			}
 		}
+	}
+
+	private void insertPost(BlogPostMetadata metadata) throws IOException {
+		/*
+		 * can't custom permalink when inserting a post, workaround steps:
+		 * 1) insert a post, set title as unique token of permalink
+		 * 2) update tile to the real title
+		 */
+		//- insert post
+		Post toBeCreatedPost = BloggerUtils.getPostObjForCreate(blog.getUrl(), metadata);
+		toBeCreatedPost.setTitle(metadata.getUniquetoken());
+		Post createdPost = blogger.posts().insert(blog.getId(), toBeCreatedPost)
+				.setFields(REQ_POST_FIELDS).execute();
+		System.out.println(createdPost.toPrettyString());
+		postListStore.add(createdPost);
+		postListStore.serializeToFile();
+		//- update title
+		/*
+		 * Blogger server has a bug, if only update title,
+		 * then title will be updated, but it response "400 Bad Request",
+		 * so update content and labels too.
+		 * It's allowed in document https://developers.google.com/blogger/docs/3.0/performance#patch
+		 */
+		Post updatedPost = patchPost(createdPost.getId(), metadata);
+		//- if the generated unique token is not the expected one, then accept it and update local metadata
+		if (!metadata.getUniquetoken().equals(
+				BloggerUtils.getPostUrlUniquetoken(updatedPost.getUrl()))) {
+			//TODO update local blog post file
+			
+		}
+	}
+
+	private Post patchPost(String postId, BlogPostMetadata metadata) throws IOException {
+		final Post toBeUpdatedPost = BloggerUtils.getPostObjForUpdate(metadata);
+		final Post updatedPost = blogger.posts().patch(blog.getId(), postId, toBeUpdatedPost)
+				.setFields(REQ_POST_FIELDS).execute();
+		System.out.println(updatedPost.toPrettyString());
+		postListStore.add(updatedPost);
+		postListStore.serializeToFile();
+		return updatedPost;
 	}
 
 }

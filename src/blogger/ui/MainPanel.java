@@ -161,9 +161,10 @@ class MainPanel extends JPanel {
 					return;
 				}
 				else {
-					if (blogPostProcessorRef.get() == null)
+					final BlogPostProcessor blogPostProcessor = blogPostProcessorRef.get();
+					if (blogPostProcessor == null)
 						return;
-					final BlogPostMetadata metadata = blogPostProcessorRef.get().getBlogPostMetadata();
+					final BlogPostMetadata metadata = blogPostProcessor.getBlogPostMetadata();
 					if (metadata.getHtmlBody() == null)
 						return;
 					UiUtils.setEnabled(false, bChoose, bProcess, bPost, bClose);
@@ -206,6 +207,7 @@ class MainPanel extends JPanel {
 					if (blogHtmlFile != null) {
 						blogHtmlFile.delete();
 					}
+					blogPostProcessorRef.set(null);
 				}
 			}
 		});

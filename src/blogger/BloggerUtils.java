@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -77,8 +76,8 @@ public class BloggerUtils {
 			}
 			post.setLabels(labels);
 		}
-		// url
-		{
+		// won't set url, server will ignore it
+		{/*
 			StringBuilder url = new StringBuilder(128);
 			url.append(blogUrl);
 			if (!blogUrl.endsWith("/")) {
@@ -88,7 +87,7 @@ public class BloggerUtils {
 			url.append(metadata.getUniquetoken());
 			url.append(".html");
 			post.setUrl(url.toString());
-		}
+		*/}
 		return post;
 	}
 
