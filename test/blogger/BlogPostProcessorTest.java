@@ -16,7 +16,7 @@ public class BlogPostProcessorTest {
 
 	@Test
 	public void readMetadataAndBodyTest() throws IOException, URISyntaxException {
-		StringBuilder[] mbArray = blogPostProcessor.readMetadataAndBody();
+		String[] mbArray = blogPostProcessor.readMetadataAndBody();
 		System.out.println("========== metadata ============");
 		System.out.println(mbArray[0]);
 		System.out.println("========== body ============");

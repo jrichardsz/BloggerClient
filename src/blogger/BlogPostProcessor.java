@@ -3,10 +3,8 @@ package blogger;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -20,6 +18,7 @@ import blogger.assets.AssetsLoader;
 import blogger.macro.Macro;
 import blogger.macro.MacroFactory;
 import blogger.macro.impl.HtmlMacro;
+import blogger.util.FileUtils;
 import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
 import blogger.util.PureStack;
@@ -51,9 +50,11 @@ public class BlogPostProcessor {
 
 	public BlogPostInfoHolder processPostFile() throws Exception {
 		System.out.println(String.format("processPostFile> file=%s", postFile));
-		final StringBuilder[] mbArray = readMetadataAndBody();
-		final StringBuilder metadataStr = mbArray[0], body = mbArray[1];
-		parseBlogPostMetadata(metadataStr);
+		String[] mbArray = readMetadataAndBody();
+		parseBlogPostMetadata(mbArray[0]);
+		final StringBuilder body = new StringBuilder(mbArray[1]);
+		mbArray = null;
+		blogPostInfoHolder.setBody(body.toString());
 		StringUtils.replaceAllStr(body, "\r\n", "\n");
 		StringUtils.replaceAllStr(body, "\r", "\n");
 		removeStartingEndingNewlines(body);
@@ -95,52 +96,53 @@ public class BlogPostProcessor {
 		return blogPostInfoHolder;
 	}
 
+	public static final String metadataStartTag = "<metadata>";
+	public static final String metadataEndTag = "</metadata>";
+
 	/**
 	 * @return metadata-body array
 	 */
-	StringBuilder[] readMetadataAndBody() throws IOException {
-		final StringBuilder[] mb = new StringBuilder[2];
-		final StringBuilder metadata = new StringBuilder(1024), body = new StringBuilder(8192);
+	String[] readMetadataAndBody() throws IOException {
+		final String postFileText = FileUtils.readFileAsText(postFile, charsetName).toString();
+		final StringBuilder metadata = new StringBuilder(1024);
 		String line;
 		final int beforeMetadata = 1, inMetadata = 2, afterMetadata = 3;
 		int state = beforeMetadata;
-		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
-				new FileInputStream(postFile), charsetName))) {
+		try (BufferedReader bufferedReader = new BufferedReader(new StringReader(postFileText))) {
 			line = bufferedReader.readLine(); // read first line and ignore
 			LogicAssert.assertTrue(line != null, "file is empty");
-			while ((line = bufferedReader.readLine()) != null) {
+			loop: while ((line = bufferedReader.readLine()) != null) {
 				switch (state) {
 				case beforeMetadata:
-					LogicAssert.assertTrue(line.equals("<metadata>"),
+					LogicAssert.assertTrue(line.equals(metadataStartTag),
 							"<metadata> not found at the second line, line=%s", line);
 					state = inMetadata;
 					break;
 				case inMetadata:
-					if (!line.equals("</metadata>"))
+					if (!line.equals(metadataEndTag)) {
 						metadata.append(line).append('\n');
-					else
+						break;
+					}
+					else {
 						state = afterMetadata;
-					break;
-				case afterMetadata:
-					body.append(line).append('\n');
-					break;
+						break loop;
+					}
 				default:
 					LogicAssert.assertTrue(false, "unknown state=" + state);
 				}
 			}
 		}
 		LogicAssert.assertTrue(state == afterMetadata, "</metadata> not found, state=%d", state);
-		mb[0] = metadata;
-		mb[1] = body;
-		return mb;
+		return new String[] { metadata.toString(),
+				postFileText.substring(postFileText.indexOf(metadataEndTag) + metadataEndTag.length()) };
 	}
 
 	/**
 	 * just split properties text
 	 */
-	private void parseBlogPostMetadata(final StringBuilder metadataStr) throws IOException {
+	private void parseBlogPostMetadata(final String metadataStr) throws IOException {
 		Properties props = new Properties();
-		props.load(new StringReader(metadataStr.toString()));
+		props.load(new StringReader(metadataStr));
 		blogPostInfoHolder.setMetadata(props.getProperty("title"), props.getProperty("tags"),
 				props.getProperty("locale"));
 	}
@@ -166,7 +168,7 @@ public class BlogPostProcessor {
 				break;
 		}
 		if (cnt > 0)
-			body.delete(body.length() - cnt, body.length());
+			body.delete(len - cnt, len);
 	}
 
 	private static final class ParsingContext {
@@ -303,7 +305,7 @@ public class BlogPostProcessor {
 							"no paired macro, %s, %s, %s",
 							macroRegion.macroName,
 							pairedMacroRegion.macroName,
-							body.subSequence(pairedMacroRegion.end,
+							body.substring(pairedMacroRegion.end,
 									Math.min(macroRegion.start, pairedMacroRegion.end + 100)));
 					if (macroRegion.macroName.equals(HtmlMacro.END_TAG)) {
 						LogicAssert.assertTrue(macroRegion.index - pairedMacroRegion.index == 1,

@@ -125,6 +125,13 @@ class MainPanel extends JPanel {
 				new SwingWorker<BlogPostInfoHolder, Void>() {
 					@Override
 					protected BlogPostInfoHolder doInBackground() throws Exception {
+						if (blogPostProcessorRef.get() != null) {
+							File htmlFile = blogPostProcessorRef.get().getBlogPostInfoHolder().getHtmlFile();
+							if (htmlFile != null) {
+								htmlFile.delete();
+							}
+							blogPostProcessorRef.set(null);
+						}
 						File postFile = FileUtils.getFileByPathOrURI(blogFilePath);
 						String charsetName = tfCharset.getText().trim();
 						if (charsetName.isEmpty())
@@ -203,9 +210,9 @@ class MainPanel extends JPanel {
 				tfUniquetoken.setText("");
 				taBodyHtml.setText("");
 				if (blogPostProcessorRef.get() != null) {
-					File blogHtmlFile = blogPostProcessorRef.get().getBlogPostInfoHolder().getHtmlFile();
-					if (blogHtmlFile != null) {
-						blogHtmlFile.delete();
+					File htmlFile = blogPostProcessorRef.get().getBlogPostInfoHolder().getHtmlFile();
+					if (htmlFile != null) {
+						htmlFile.delete();
 					}
 					blogPostProcessorRef.set(null);
 				}

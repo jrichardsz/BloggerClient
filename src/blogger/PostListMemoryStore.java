@@ -90,8 +90,7 @@ public class PostListMemoryStore {
 
 	public synchronized void serializeToFile() throws IOException {
 		File file = getPostsCacheFile();
-		if (file.exists())
-			BloggerUtils.serializeJsonToFile(postList, file);
+		BloggerUtils.serializeJsonToFile(postList, file);
 	}
 
 	public synchronized int size() {

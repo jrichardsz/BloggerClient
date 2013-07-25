@@ -1,6 +1,11 @@
 package blogger;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Random;
 
 import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
@@ -10,7 +15,13 @@ public class BlogPostInfoHolder {
 	private final String charsetName;
 
 	private String title, tags, locale, uniquetoken;
+	/**
+	 * post file body, just after "&lt;/metadata&gt;", include the next newline
+	 */
+	private String body;
+
 	private File htmlFile;
+	/** processed post file's body, it's html */
 	private String htmlBody;
 
 	public BlogPostInfoHolder(final File postFile, final String charsetName) {
@@ -19,7 +30,7 @@ public class BlogPostInfoHolder {
 	}
 
 	void setMetadata(String title, String tags, String locale) {
-		if (title == null || tags == null || locale == null) {
+		if (title == null || tags == null) {
 			throw new IllegalArgumentException("metadata can't be null");
 		}
 		if (this.title != null || this.tags != null || this.locale != null) {
@@ -36,15 +47,8 @@ public class BlogPostInfoHolder {
 			this.title = enTitle = title;
 		}
 		this.tags = tags;
-		if (locale == null || locale.trim().isEmpty()) {
-			this.locale = "";
-			this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase();
-		}
-		else {
-			this.locale = locale = locale.trim();
-			this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase() + "-"
-					+ locale.toLowerCase();
-		}
+		this.locale = (locale == null ? "" : locale.trim());
+		this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase();
 		// in order to verify blanks by mistake
 		LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0, "invalid uniquetoken=%s", uniquetoken);
 		HtmlUtils.verifyHtmlElementId(uniquetoken);
@@ -58,6 +62,9 @@ public class BlogPostInfoHolder {
 		return charsetName;
 	}
 
+	/**
+	 * @return real title, not include permalink related text
+	 */
 	public String getTitle() {
 		return title;
 	}
@@ -77,6 +84,10 @@ public class BlogPostInfoHolder {
 		return uniquetoken;
 	}
 
+	void setBody(String body) {
+		this.body = body;
+	}
+
 	public File getHtmlFile() {
 		return htmlFile;
 	}
@@ -91,6 +102,42 @@ public class BlogPostInfoHolder {
 
 	void setHtmlBody(String htmlBody) {
 		this.htmlBody = htmlBody;
+	}
+
+	/**
+	 * update new unique token, serialize to post file, so we'll get the same unique token at next
+	 * time
+	 */
+	public void updateNewUniquetokenAndSerialize(String newUniquetoken) throws IOException {
+		final File file = postFile;
+		final File tempFile = new File(file.getParent(), file.getName() + ".tmp."
+				+ new Random().nextInt());
+		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+				tempFile), getCharsetName()))) {
+			writer.newLine(); // write first line, keep it empty
+			writer.write(BlogPostProcessor.metadataStartTag);
+			writer.newLine();
+			writer.write("title = ");
+			writer.write(title);
+			writer.write(" || ");
+			writer.write(newUniquetoken);
+			writer.newLine();
+			writer.write("tags = ");
+			writer.write(tags);
+			writer.newLine();
+			if (!locale.isEmpty()) {
+				writer.write("locale = ");
+				writer.write(locale);
+				writer.newLine();
+			}
+			writer.write(BlogPostProcessor.metadataEndTag);
+			writer.write(body);
+		}
+		file.delete();
+		if (!tempFile.renameTo(file)) {
+			throw new IOException(String.format("move [%s] to [%s] failed", tempFile, file));
+		}
+		this.uniquetoken = newUniquetoken;
 	}
 
 	@Override

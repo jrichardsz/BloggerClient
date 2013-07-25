@@ -317,10 +317,10 @@ class RemotePanel extends JPanel {
 		 */
 		Post updatedPost = patchPost(createdPost.getId(), holder);
 		//- if the generated unique token is not the expected one, then accept it and update local metadata
-		if (!holder.getUniquetoken().equals(
-				BloggerUtils.getPostUrlUniquetoken(updatedPost.getUrl()))) {
-			//TODO update local blog post file
-			
+		String newUniquetoken = BloggerUtils.getPostUrlUniquetoken(updatedPost.getUrl());
+		if (!holder.getUniquetoken().equals(newUniquetoken)) {
+			// update local post file
+			holder.updateNewUniquetokenAndSerialize(newUniquetoken);
 		}
 	}
 
