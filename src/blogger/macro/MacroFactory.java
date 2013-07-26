@@ -1,5 +1,6 @@
 package blogger.macro;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
@@ -67,8 +68,8 @@ public class MacroFactory {
 		addMacroPair(new ListMacro());
 		addMacroPair(new HtmlMacro());
 
-		List<String> htmlElemNames = FileUtils
-				.readPackageFileAsLines("blogger/macro/PlainHtmlElem.list");
+		List<String> htmlElemNames = FileUtils.readPackageFileAsLines(
+				"blogger/macro/PlainHtmlElem.list", StandardCharsets.UTF_8);
 		for (String htmlElemName : htmlElemNames) {
 			htmlElemName = htmlElemName.trim();
 			if (htmlElemName.length() > 0) {

@@ -1,6 +1,5 @@
 package blogger.util;
 
-import java.util.regex.Pattern;
 
 public class HtmlUtils {
 
@@ -54,15 +53,6 @@ public class HtmlUtils {
 			final int endIndex) {
 		for (String[] entity : LEFT_HTML_ENTITIES) {
 			StringUtils.replaceCharToStr(body, startIndex, endIndex, entity[0].charAt(0), entity[1]);
-		}
-	}
-
-	private static final Pattern HTML_ELEMENT_ID_PATTERN = Pattern
-			.compile("^[a-z0-9][a-z0-9-_]*[a-z0-9]$");
-
-	public static void verifyHtmlElementId(String httpElementId) throws IllegalArgumentException {
-		if (!HTML_ELEMENT_ID_PATTERN.matcher(httpElementId).matches()) {
-			throw new IllegalArgumentException(String.format("invalid httpElementId=%s", httpElementId));
 		}
 	}
 

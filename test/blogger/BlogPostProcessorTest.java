@@ -3,6 +3,7 @@ package blogger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.Test;
@@ -49,9 +50,10 @@ public class BlogPostProcessorTest {
 	}
 
 	@Test
-	public void getMacroRegionListTest() throws IOException {
-		List<MacroRegion> mrList = blogPostProcessor.getMacroRegionList(FileUtils
-				.readPackageFileAsText("blogger/test-zh.txt"));
+	public void getMacroRegionListTest() throws IOException, URISyntaxException {
+		StringBuilder strBuilder = new StringBuilder(FileUtils.readPackageFileAsText(
+				"blogger/test-zh.txt", StandardCharsets.UTF_8));
+		List<MacroRegion> mrList = blogPostProcessor.getMacroRegionList(strBuilder);
 		for (MacroRegion mr : mrList) {
 			System.out.println(mr);
 		}

@@ -1,37 +1,24 @@
 package blogger;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.Random;
+import java.util.regex.Pattern;
 
-import blogger.util.HtmlUtils;
 import blogger.util.LogicAssert;
 
 public class BlogPostInfoHolder {
-	private final File postFile;
-	private final String charsetName;
 
-	private String title, tags, locale, uniquetoken;
-	/**
-	 * post file body, just after "&lt;/metadata&gt;", include the next newline
-	 */
-	private String body;
+	private volatile String title, tags, locale, uniquetoken, body;
 
-	private File htmlFile;
+	private volatile File htmlFile;
 	/** processed post file's body, it's html */
-	private String htmlBody;
+	private volatile String htmlBody;
 
-	public BlogPostInfoHolder(final File postFile, final String charsetName) {
-		this.postFile = postFile;
-		this.charsetName = charsetName;
+	public BlogPostInfoHolder() {
 	}
 
 	void setMetadata(String title, String tags, String locale) {
-		if (title == null || tags == null) {
-			throw new IllegalArgumentException("metadata can't be null");
+		if (title == null) { // tags/locale could be null
+			throw new IllegalArgumentException("title can't be null");
 		}
 		if (this.title != null || this.tags != null || this.locale != null) {
 			throw new IllegalStateException("metadata was setted before");
@@ -46,21 +33,18 @@ public class BlogPostInfoHolder {
 		else {
 			this.title = enTitle = title;
 		}
-		this.tags = tags;
+		this.tags = (tags == null ? "" : tags.trim());
 		this.locale = (locale == null ? "" : locale.trim());
-		this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').toLowerCase();
+		this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').replace('_', '-').toLowerCase();
 		// in order to verify blanks by mistake
-		LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0, "invalid uniquetoken=%s", uniquetoken);
-		HtmlUtils.verifyHtmlElementId(uniquetoken);
+		LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0,
+				"invalid, -- is not allowed, uniquetoken=%s", uniquetoken);
+		LogicAssert.assertTrue(UNIQUETOKEN_PATTERN.matcher(uniquetoken).matches(),
+				"invalid, allowed character is [A-Za-z0-9 ._-], uniquetoken=%s", uniquetoken);
 	}
 
-	public File getPostFile() {
-		return postFile;
-	}
-
-	public String getCharsetName() {
-		return charsetName;
-	}
+	private static final Pattern UNIQUETOKEN_PATTERN = Pattern
+			.compile("^[a-z0-9][a-z0-9-]*[a-z0-9]$");
 
 	/**
 	 * @return real title, not include permalink related text
@@ -69,6 +53,11 @@ public class BlogPostInfoHolder {
 		return title;
 	}
 
+	/**
+	 * it will be separated by ',' if there're more than one tag
+	 * 
+	 * @return tags or empty string
+	 */
 	public String getTags() {
 		return tags;
 	}
@@ -84,7 +73,17 @@ public class BlogPostInfoHolder {
 		return uniquetoken;
 	}
 
+	void setUniquetoken(String newUniquetoken) {
+		// unique token could be over-written
+		this.uniquetoken = newUniquetoken;
+	}
+
+	String getBody() {
+		return body;
+	}
+
 	void setBody(String body) {
+		LogicAssert.assertTrue(body != null && this.body == null, "");
 		this.body = body;
 	}
 
@@ -93,6 +92,7 @@ public class BlogPostInfoHolder {
 	}
 
 	void setHtmlFile(File htmlFile) {
+		LogicAssert.assertTrue(htmlFile != null && this.htmlFile == null, "");
 		this.htmlFile = htmlFile;
 	}
 
@@ -101,53 +101,15 @@ public class BlogPostInfoHolder {
 	}
 
 	void setHtmlBody(String htmlBody) {
+		LogicAssert.assertTrue(htmlBody != null && this.htmlBody == null, "");
 		this.htmlBody = htmlBody;
-	}
-
-	/**
-	 * update new unique token, serialize to post file, so we'll get the same unique token at next
-	 * time
-	 */
-	public void updateNewUniquetokenAndSerialize(String newUniquetoken) throws IOException {
-		final File file = postFile;
-		final File tempFile = new File(file.getParent(), file.getName() + ".tmp."
-				+ new Random().nextInt());
-		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-				tempFile), getCharsetName()))) {
-			writer.newLine(); // write first line, keep it empty
-			writer.write(BlogPostProcessor.metadataStartTag);
-			writer.newLine();
-			writer.write("title = ");
-			writer.write(title);
-			writer.write(" || ");
-			writer.write(newUniquetoken);
-			writer.newLine();
-			writer.write("tags = ");
-			writer.write(tags);
-			writer.newLine();
-			if (!locale.isEmpty()) {
-				writer.write("locale = ");
-				writer.write(locale);
-				writer.newLine();
-			}
-			writer.write(BlogPostProcessor.metadataEndTag);
-			writer.write(body);
-		}
-		file.delete();
-		if (!tempFile.renameTo(file)) {
-			throw new IOException(String.format("move [%s] to [%s] failed", tempFile, file));
-		}
-		this.uniquetoken = newUniquetoken;
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("BlogPostInfoHolder [postFile=").append(postFile).append(", charsetName=")
-				.append(charsetName).append(", title=").append(title).append(", tags=").append(tags)
-				.append(", locale=").append(locale).append(", uniquetoken=").append(uniquetoken)
-				.append("]");
-		return builder.toString();
+		return String.format(
+				"BlogPostInfoHolder [title=%s, tags=%s, locale=%s, uniquetoken=%s, htmlFile=%s]", title,
+				tags, locale, uniquetoken, htmlFile);
 	}
 
 }

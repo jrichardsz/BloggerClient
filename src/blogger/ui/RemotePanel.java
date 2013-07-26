@@ -21,6 +21,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
 import blogger.BlogPostInfoHolder;
+import blogger.BlogPostProcessor;
 import blogger.BloggerAPIBuilder;
 import blogger.BloggerUtils;
 import blogger.LocalFileLocator;
@@ -272,7 +273,8 @@ class RemotePanel extends JPanel {
 	/**
 	 * It will access network, do not invoke it in UI thread.
 	 */
-	void post(BlogPostInfoHolder holder) throws IOException {
+	void post(BlogPostProcessor blogPostProcessor) throws IOException {
+		final BlogPostInfoHolder holder = blogPostProcessor.getBlogPostInfoHolder();
 		final Post existingPost = postListStore.getByUniquetoken(holder.getUniquetoken());
 		if (existingPost == null) {
 			String message = String.format("[%s] is a new post, do you want to create it?",
@@ -280,7 +282,7 @@ class RemotePanel extends JPanel {
 			final int selection = JOptionPane.showConfirmDialog(null, message, "Create post",
 					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
 			if (selection == JOptionPane.YES_OPTION) {
-				insertPost(holder);
+				insertPost(blogPostProcessor);
 			}
 		}
 		else {
@@ -294,7 +296,8 @@ class RemotePanel extends JPanel {
 		}
 	}
 
-	private void insertPost(final BlogPostInfoHolder holder) throws IOException {
+	private void insertPost(BlogPostProcessor blogPostProcessor) throws IOException {
+		final BlogPostInfoHolder holder = blogPostProcessor.getBlogPostInfoHolder();
 		/*
 		 * can't custom permalink when inserting a post, workaround steps:
 		 * 1) insert a post, set title as unique token of permalink
@@ -320,7 +323,7 @@ class RemotePanel extends JPanel {
 		String newUniquetoken = BloggerUtils.getPostUrlUniquetoken(updatedPost.getUrl());
 		if (!holder.getUniquetoken().equals(newUniquetoken)) {
 			// update local post file
-			holder.updateNewUniquetokenAndSerialize(newUniquetoken);
+			blogPostProcessor.updateNewUniquetokenAndSerialize(newUniquetoken);
 		}
 	}
 

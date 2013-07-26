@@ -171,14 +171,13 @@ class MainPanel extends JPanel {
 					final BlogPostProcessor blogPostProcessor = blogPostProcessorRef.get();
 					if (blogPostProcessor == null)
 						return;
-					final BlogPostInfoHolder blogPostInfoHolder = blogPostProcessor.getBlogPostInfoHolder();
-					if (blogPostInfoHolder.getHtmlBody() == null)
+					if (blogPostProcessor.getBlogPostInfoHolder().getHtmlBody() == null)
 						return;
 					UiUtils.setEnabled(false, bChoose, bProcess, bPost, bClose);
 					new SwingWorker<Void, Void>() {
 						@Override
 						protected Void doInBackground() throws Exception {
-							remotePanel.post(blogPostInfoHolder);
+							remotePanel.post(blogPostProcessor);
 							return null;
 						}
 

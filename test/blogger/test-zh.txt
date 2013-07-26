@@ -1,9 +1,23 @@
 first line will be ignored.
 <metadata>
-title = 测试 || Test 1
+# format: {real-title} || {english-words-for-permalink},
+# the second part:
+## could be ignored if first part is in English, and also "||", i.e. "title = test 1"
+## allowed character is [A-Za-z0-9 ._-]
+## ' '/'.'/'_'/'-' will be replaced to '-'
+## will be changed as lowercase
+## i.e. "Test 1 zh" to "test-1-zh"
+title = 测试 || Test 1 zh
+
+# tags (labels in Blogger)
+## it's not required
+## separated by ',' if there're more than one tags
 tags = zh, test
+
 # locale is not required
 locale = zh
+
+# </metadata> for testing
 </metadata>
 
 = 标题1 || h-1 =

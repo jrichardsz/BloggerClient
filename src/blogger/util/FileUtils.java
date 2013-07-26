@@ -1,14 +1,11 @@
 package blogger.util;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.List;
 
 public class FileUtils {
@@ -16,6 +13,7 @@ public class FileUtils {
 	public static File getFileByPathOrURI(String path) throws URISyntaxException {
 		path = path.trim();
 		if (path.startsWith("file://")) {
+			// drag and drop file to Swing text field, the uri may be invalid
 			path = path.replace(" ", "%20");
 			return new File(new URI(path));
 		}
@@ -27,66 +25,46 @@ public class FileUtils {
 	/**
 	 * load package file from sub-package as text lines.
 	 * <p>
-	 * file encoding must be UTF-8.
-	 * </p>
-	 * <p>
 	 * do NOT include Unicode BOM in package file, it won't be removed.
-	 * </p>
 	 * 
 	 * @param name
 	 *          file relative path, i.e. blogger/macro/PlainHtmlElem.list
-	 * @return file's text lines, it won't be null
+	 * @return text lines, it won't be null
+	 * @see {@link java.nio.file.Files.readAllLines}
 	 */
-	public static List<String> readPackageFileAsLines(final String name) throws IOException {
-		final List<String> result = new ArrayList<>();
-		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(FileUtils.class
-				.getClassLoader().getResourceAsStream(name), "UTF-8"))) {
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				result.add(line);
-			}
-		}
-		return result;
+	public static List<String> readPackageFileAsLines(String name, Charset charset)
+			throws IOException, URISyntaxException {
+		return Files.readAllLines(
+				new File(FileUtils.class.getClassLoader().getResource(name).toURI()).toPath(), charset);
 	}
 
 	/**
 	 * load package file from sub-package as text.
 	 * <p>
-	 * file encoding must be UTF-8.
-	 * </p>
-	 * <p>
 	 * do NOT include Unicode BOM in package file, it won't be removed.
-	 * </p>
 	 * 
 	 * @param name
 	 *          file relative path, i.e. blogger/macro/PlainHtmlElem.list
 	 * @return file's text, it won't be null
 	 */
-	public static StringBuilder readPackageFileAsText(final String name) throws IOException {
-		return readStreamAsText(FileUtils.class.getClassLoader().getResourceAsStream(name), "UTF-8");
-	}
-
-	private static StringBuilder readStreamAsText(InputStream inStream, String charsetName)
-			throws IOException {
-		final StringBuilder result = new StringBuilder(8192);
-		try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inStream,
-				charsetName))) {
-			final char[] cbuf = new char[1024];
-			int len;
-			while ((len = bufferedReader.read(cbuf)) >= 0) {
-				result.append(cbuf, 0, len);
-			}
-		}
-		return result;
+	public static String readPackageFileAsText(String name, Charset charset) throws IOException,
+			URISyntaxException {
+		return readFileAsText(new File(FileUtils.class.getClassLoader().getResource(name).toURI()),
+				charset);
 	}
 
 	/**
-	 * @return string builder, won't be null
+	 * @return text, it won't be null
 	 */
-	public static StringBuilder readFileAsText(File file, String charsetName) throws IOException {
-		try (InputStream inStream = new FileInputStream(file)) {
-			return readStreamAsText(inStream, charsetName);
-		}
+	public static String readFileAsText(File file, String charsetName) throws IOException {
+		return new String(Files.readAllBytes(file.toPath()), charsetName);
+	}
+
+	/**
+	 * @return text, it won't be null
+	 */
+	public static String readFileAsText(File file, Charset charset) throws IOException {
+		return new String(Files.readAllBytes(file.toPath()), charset);
 	}
 
 }

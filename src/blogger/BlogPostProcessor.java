@@ -2,15 +2,18 @@ package blogger;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,19 +36,11 @@ public class BlogPostProcessor {
 	public BlogPostProcessor(final File postFile, final String charsetName) {
 		this.postFile = postFile;
 		this.charsetName = charsetName;
-		this.blogPostInfoHolder = new BlogPostInfoHolder(postFile, charsetName);
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				BlogPostInfoHolder holder = getBlogPostInfoHolder();
-				if (holder != null) {
-					File file = holder.getHtmlFile();
-					if (file != null && file.exists() && !file.delete()) {
-						System.out.println(String.format("delete [%s] failed", file));
-					}
-				}
-			}
-		});
+		this.blogPostInfoHolder = new BlogPostInfoHolder();
+	}
+
+	public BlogPostInfoHolder getBlogPostInfoHolder() {
+		return blogPostInfoHolder;
 	}
 
 	public BlogPostInfoHolder processPostFile() throws Exception {
@@ -86,40 +81,43 @@ public class BlogPostProcessor {
 		for (String assetRelativePath : parsingContext.assetRelativePathSet) {
 			body.insert(0, AssetsLoader.readAssetAsText(assetRelativePath));
 		}
-		blogPostInfoHolder.setHtmlFile(writeToPostHtmlFile(body, postFile.getParent(),
-				postFile.getName(), charsetName));
+		File htmlFile = writeToPostHtmlFile(body, postFile.getParent(), postFile.getName(), charsetName);
+		htmlFile.deleteOnExit();
+		blogPostInfoHolder.setHtmlFile(htmlFile);
 		blogPostInfoHolder.setHtmlBody(body.toString());
 		return blogPostInfoHolder;
 	}
 
-	public BlogPostInfoHolder getBlogPostInfoHolder() {
-		return blogPostInfoHolder;
-	}
-
-	public static final String metadataStartTag = "<metadata>";
-	public static final String metadataEndTag = "</metadata>";
+	private static final String METADATA_START_TAG = "<metadata>";
+	private static final String METADATA_END_TAG = "</metadata>";
 
 	/**
+	 * take care when changing the implementation, see
+	 * {@link #updateNewUniquetokenAndSerialize(String)}
+	 * 
 	 * @return metadata-body array
 	 */
 	String[] readMetadataAndBody() throws IOException {
-		final String postFileText = FileUtils.readFileAsText(postFile, charsetName).toString();
+		final String postFileText = FileUtils.readFileAsText(postFile, charsetName);
 		final StringBuilder metadata = new StringBuilder(1024);
-		String line;
 		final int beforeMetadata = 1, inMetadata = 2, afterMetadata = 3;
 		int state = beforeMetadata;
+		int readLen = 0;
 		try (BufferedReader bufferedReader = new BufferedReader(new StringReader(postFileText))) {
+			String line;
 			line = bufferedReader.readLine(); // read first line and ignore
+			readLen = countNewReadLen(postFileText, readLen + line.length());
 			LogicAssert.assertTrue(line != null, "file is empty");
 			loop: while ((line = bufferedReader.readLine()) != null) {
+				readLen = countNewReadLen(postFileText, readLen + line.length());
 				switch (state) {
 				case beforeMetadata:
-					LogicAssert.assertTrue(line.equals(metadataStartTag),
-							"<metadata> not found at the second line, line=%s", line);
+					LogicAssert.assertTrue(line.equals(METADATA_START_TAG),
+							"%s not found at the second line, line=%s", METADATA_START_TAG, line);
 					state = inMetadata;
 					break;
 				case inMetadata:
-					if (!line.equals(metadataEndTag)) {
+					if (!line.equals(METADATA_END_TAG)) {
 						metadata.append(line).append('\n');
 						break;
 					}
@@ -132,9 +130,65 @@ public class BlogPostProcessor {
 				}
 			}
 		}
-		LogicAssert.assertTrue(state == afterMetadata, "</metadata> not found, state=%d", state);
+		LogicAssert.assertTrue(state == afterMetadata, "%s not found, state=%d", METADATA_END_TAG,
+				state);
 		return new String[] { metadata.toString(),
-				postFileText.substring(postFileText.indexOf(metadataEndTag) + metadataEndTag.length()) };
+				// post file body, start from newline after "</metadata>"
+				postFileText.substring(readLen) };
+	}
+
+	private int countNewReadLen(String postFileText, int readLen) {
+		if (postFileText.length() > readLen) {
+			char ch = postFileText.charAt(readLen);
+			if (ch == '\r') {
+				readLen++;
+				if (postFileText.length() > readLen + 1) {
+					ch = postFileText.charAt(readLen + 1);
+					if (ch == '\n')
+						readLen++;
+				}
+			}
+			else if (ch == '\n')
+				readLen++;
+		}
+		return readLen;
+	}
+
+	/**
+	 * update new unique token, serialize to post file, so we'll get the same unique token at next
+	 * time
+	 */
+	public void updateNewUniquetokenAndSerialize(String newUniquetoken) throws IOException {
+		final File file = postFile;
+		final File tempFile = new File(file.getParent(), file.getName() + ".tmp."
+				+ new Random().nextInt());
+		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+				tempFile), charsetName))) {
+			writer.newLine(); // write first line, keep it empty
+			writer.write(METADATA_START_TAG);
+			writer.newLine();
+			writer.write("title = ");
+			writer.write(blogPostInfoHolder.getTitle());
+			writer.write(" || ");
+			writer.write(newUniquetoken);
+			writer.newLine();
+			writer.write("tags = ");
+			writer.write(blogPostInfoHolder.getTags());
+			writer.newLine();
+			if (!blogPostInfoHolder.getLocale().isEmpty()) {
+				writer.write("locale = ");
+				writer.write(blogPostInfoHolder.getLocale());
+				writer.newLine();
+			}
+			writer.write(METADATA_END_TAG);
+			writer.newLine();
+			writer.write(blogPostInfoHolder.getBody());
+		}
+		file.delete();
+		if (!tempFile.renameTo(file)) {
+			throw new IOException(String.format("move [%s] to [%s] failed", tempFile, file));
+		}
+		blogPostInfoHolder.setUniquetoken(newUniquetoken);
 	}
 
 	/**
@@ -523,8 +577,10 @@ public class BlogPostProcessor {
 				}
 				headerText = section + " " + headerText;
 				if (!notoc) {
-					headerIdForAnchor = headerIdForAnchor.replace(' ', '-').replace('.', '-').toLowerCase();
-					HtmlUtils.verifyHtmlElementId(headerIdForAnchor);
+					headerIdForAnchor = headerIdForAnchor.replace(' ', '-').replace('.', '-')
+							.replace('_', '-').toLowerCase();
+					LogicAssert.assertTrue(ANCHOR_PATTERN.matcher(headerIdForAnchor).matches(),
+							"invalid, allowed character is [A-Za-z0-9 ._-], anchor=%s", headerIdForAnchor);
 				}
 				headerMetadataList.add(new BlogPostHeaderMetadata(startingEqualSignCount, headerText,
 						headerIdForAnchor));
@@ -540,6 +596,8 @@ public class BlogPostProcessor {
 			}
 		}
 	}
+
+	private static final Pattern ANCHOR_PATTERN = Pattern.compile("^[a-z0-9][a-z0-9-]*[a-z0-9]$");
 
 	/**
 	 * it's invoked when parsing and reaching a new header
