@@ -102,14 +102,16 @@ public class BlogPostProcessor {
 		final StringBuilder metadata = new StringBuilder(1024);
 		final int beforeMetadata = 1, inMetadata = 2, afterMetadata = 3;
 		int state = beforeMetadata;
-		int readLen = 0;
+		int readLen = 0, lastLineNewlineCount = 0;
 		try (BufferedReader bufferedReader = new BufferedReader(new StringReader(postFileText))) {
 			String line;
 			line = bufferedReader.readLine(); // read first line and ignore
-			readLen = countNewReadLen(postFileText, readLen + line.length());
+			readLen += line.length();
+			readLen += (lastLineNewlineCount = getLineNewlineCount(postFileText, readLen));
 			LogicAssert.assertTrue(line != null, "file is empty");
 			loop: while ((line = bufferedReader.readLine()) != null) {
-				readLen = countNewReadLen(postFileText, readLen + line.length());
+				readLen += line.length();
+				readLen += (lastLineNewlineCount = getLineNewlineCount(postFileText, readLen));
 				switch (state) {
 				case beforeMetadata:
 					LogicAssert.assertTrue(line.equals(METADATA_START_TAG),
@@ -132,26 +134,31 @@ public class BlogPostProcessor {
 		}
 		LogicAssert.assertTrue(state == afterMetadata, "%s not found, state=%d", METADATA_END_TAG,
 				state);
+		final String metadataEndTag = postFileText.substring(readLen - METADATA_END_TAG.length()
+				- lastLineNewlineCount, readLen - lastLineNewlineCount);
+		LogicAssert.assertTrue(metadataEndTag.equals(METADATA_END_TAG),
+				"wrong, readLen=%d, metadataEndTag=%s", readLen, metadataEndTag);
 		return new String[] { metadata.toString(),
-				// post file body, start from newline after "</metadata>"
+				// post file body, start from new line after "</metadata>"
 				postFileText.substring(readLen) };
 	}
 
-	private int countNewReadLen(String postFileText, int readLen) {
+	private int getLineNewlineCount(String postFileText, final int readLen) {
+		int newlineCount = 0;
 		if (postFileText.length() > readLen) {
 			char ch = postFileText.charAt(readLen);
 			if (ch == '\r') {
-				readLen++;
+				newlineCount++;
 				if (postFileText.length() > readLen + 1) {
 					ch = postFileText.charAt(readLen + 1);
 					if (ch == '\n')
-						readLen++;
+						newlineCount++;
 				}
 			}
 			else if (ch == '\n')
-				readLen++;
+				newlineCount++;
 		}
-		return readLen;
+		return newlineCount;
 	}
 
 	/**
