@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +36,14 @@ public class BlogPostProcessor {
 		this.postFile = postFile;
 		this.charsetName = charsetName;
 		this.blogPostInfoHolder = new BlogPostInfoHolder();
+	}
+
+	public File getPostFile() {
+		return postFile;
+	}
+
+	public String getCharsetName() {
+		return charsetName;
 	}
 
 	public BlogPostInfoHolder getBlogPostInfoHolder() {
@@ -105,9 +112,10 @@ public class BlogPostProcessor {
 		try (BufferedReader bufferedReader = new BufferedReader(new StringReader(postFileText))) {
 			String line;
 			line = bufferedReader.readLine(); // read first line and ignore
+			if (line == null)
+				throw new RuntimeException("file is empty");
 			readLen += line.length();
 			readLen += (lastLineNewlineCount = getLineNewlineCount(postFileText, readLen));
-			LogicAssert.assertTrue(line != null, "file is empty");
 			loop: while ((line = bufferedReader.readLine()) != null) {
 				readLen += line.length();
 				readLen += (lastLineNewlineCount = getLineNewlineCount(postFileText, readLen));
@@ -166,8 +174,7 @@ public class BlogPostProcessor {
 	 */
 	public void updateNewUniquetokenAndSerialize(String newUniquetoken) throws IOException {
 		final File file = postFile;
-		final File tempFile = new File(file.getParent(), file.getName() + ".tmp."
-				+ new Random().nextInt());
+		final File tempFile = FileUtils.getTempFile(file);
 		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
 				tempFile), charsetName))) {
 			writer.newLine(); // write first line, keep it empty
@@ -189,6 +196,10 @@ public class BlogPostProcessor {
 			writer.write(METADATA_END_TAG);
 			writer.newLine();
 			writer.write(blogPostInfoHolder.getBody());
+		}
+		catch (IOException e) {
+			tempFile.delete();
+			throw e;
 		}
 		file.delete();
 		if (!tempFile.renameTo(file)) {

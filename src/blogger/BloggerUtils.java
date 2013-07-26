@@ -10,7 +10,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+
+import blogger.util.FileUtils;
 
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonGenerator;
@@ -33,12 +34,16 @@ public class BloggerUtils {
 	}
 
 	public static void serializeJsonToFile(GenericJson json, File file) throws IOException {
-		File tempFile = new File(file.getParent(), file.getName() + ".tmp." + new Random().nextInt());
+		File tempFile = FileUtils.getTempFile(file);
 		JsonGenerator jsonGenerator = null;
 		try {
 			jsonGenerator = BloggerAPIBuilder.getJsonFactory().createJsonGenerator(
 					new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8")));
 			jsonGenerator.serialize(json);
+		}
+		catch (IOException e) {
+			tempFile.delete();
+			throw e;
 		}
 		finally {
 			if (jsonGenerator != null)
@@ -51,10 +56,12 @@ public class BloggerUtils {
 	}
 
 	/**
-	 * get unique token from post url. i.e.
-	 * input "http://zenzhong8383.blogspot.com/2013/06/install-macosx-mountain-lion-on-virtualbox-en.html",
+	 * get unique token from post url. i.e. input
+	 * "http://zenzhong8383.blogspot.com/2013/06/install-macosx-mountain-lion-on-virtualbox-en.html",
 	 * it will output "install-macosx-mountain-lion-on-virtualbox-en"
-	 * @param postUrl blog post's url
+	 * 
+	 * @param postUrl
+	 *          blog post's url
 	 * @return unique token
 	 */
 	public static String getPostUrlUniquetoken(String postUrl) {
@@ -87,7 +94,8 @@ public class BloggerUtils {
 			url.append(holder.getUniquetoken());
 			url.append(".html");
 			post.setUrl(url.toString());
-		*/}
+			*/
+		}
 		return post;
 	}
 

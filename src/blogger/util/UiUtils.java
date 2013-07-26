@@ -3,9 +3,12 @@ package blogger.util;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -39,26 +42,35 @@ public class UiUtils {
 		JOptionPane.showMessageDialog(parentComponent, panel, title, messageType);
 	}
 
-	public static void enableDisableContainers(JComponent container, boolean enable) {
+	public static void enableContainers(JComponent container, boolean b) {
 		if (container.getComponentCount() > 0) {
 			Component[] comps = container.getComponents();
 			for (Component comp : comps) {
 				if (comp instanceof JComponent) {
-					enableDisableContainers((JComponent) comp, enable);
-					comp.setEnabled(enable);
+					enableContainers((JComponent) comp, b);
+					comp.setEnabled(b);
 				}
 			}
 		}
 	}
 
-	public static void handleEDTException(Component parentComponent, Exception e) {
-		e.printStackTrace();
-		// show error message in textarea
-		StringWriter sw = new StringWriter(1024);
-		sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
-		e.printStackTrace(new PrintWriter(sw));
-		showTextInTextareaDialog(parentComponent, sw.toString(), "Exception stack",
-				JOptionPane.ERROR_MESSAGE);
+	public static void showErrorMessage(final Component parentComponent, String message,
+			final Exception ex) {
+		ex.printStackTrace();
+		final JButton bDetails = new JButton("Show details");
+		bDetails.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final StringWriter sw = new StringWriter(1024);
+				sw.append(BloggerClient.NAME).append(' ').append(BloggerClient.VERSION).append('\n');
+				ex.printStackTrace(new PrintWriter(sw));
+				showTextInTextareaDialog(parentComponent, sw.toString(), "Exception stack",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		});
+		Object[] options = new Object[] { bDetails, "Close" };
+		JOptionPane.showOptionDialog(parentComponent, message, "Error", JOptionPane.YES_NO_OPTION,
+				JOptionPane.ERROR_MESSAGE, null, options, null);
 	}
 
 	public static void setEnabled(boolean b, Component... components) {

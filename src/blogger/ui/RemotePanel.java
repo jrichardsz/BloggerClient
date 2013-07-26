@@ -68,7 +68,7 @@ class RemotePanel extends JPanel {
 					ex.printStackTrace();
 					String message = String.format("Connect to server failed, try to enable proxy at %s",
 							LocalFileLocator.getInstance().getConfFile());
-					JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
+					UiUtils.showErrorMessage(frame, message, ex);
 					return;
 				}
 				self.start();
@@ -220,8 +220,7 @@ class RemotePanel extends JPanel {
 					e.printStackTrace();
 					if (!bRetry.isVisible())
 						bRetry.setVisible(true);
-					JOptionPane.showMessageDialog(frame, "Load posts failed.", "Error",
-							JOptionPane.ERROR_MESSAGE);
+					UiUtils.showErrorMessage(frame, "Load posts failed.", e);
 				}
 			}
 		}.execute();

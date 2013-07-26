@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Random;
 
 public class FileUtils {
 
@@ -65,6 +66,27 @@ public class FileUtils {
 	 */
 	public static String readFileAsText(File file, Charset charset) throws IOException {
 		return new String(Files.readAllBytes(file.toPath()), charset);
+	}
+
+	private static final Random FILENAME_RANDOM = new Random();
+
+	/**
+	 * create a empty temp file at file's directory, temp file's name is based on file's name,
+	 * i.e. input "f1.txt", may output "f1.txt.tmp.467913456"
+	 */
+	public static File getTempFile(File file) throws IOException {
+		File tempFile;
+		while (true) {
+			tempFile = new File(file.getParent(), file.getName() + ".tmp." + FILENAME_RANDOM.nextInt());
+			if (!tempFile.exists()) {
+				if (!tempFile.createNewFile()) {
+					throw new IOException(String.format("create %s failed", tempFile));
+				}
+				return tempFile;
+			}
+			else
+				continue;
+		}
 	}
 
 }

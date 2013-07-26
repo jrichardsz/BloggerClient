@@ -6,11 +6,8 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,6 +33,7 @@ class MainPanel extends JPanel {
 	private final BloggerClientFrame frame;
 
 	private static final String DEFAULT_CHARSET_NAME = "UTF-8";
+	/** make sure update it in UI thread */
 	private File currentDirectory = new File(System.getProperty("user.home"));
 
 	private final AtomicInteger atomicGridy = new AtomicInteger(0);
@@ -47,8 +45,7 @@ class MainPanel extends JPanel {
 	}
 
 	private void createGUI() {
-		final MainPanel p = this;
-		p.setLayout(new GridBagLayout());
+		setLayout(new GridBagLayout());
 
 		final JTextField tfCharset = new JTextField(DEFAULT_CHARSET_NAME);
 		final JButton bChoose = new JButton("Choose");
@@ -62,9 +59,9 @@ class MainPanel extends JPanel {
 		final JTextField tfUniquetoken = new JTextField();
 		final JTextArea taBodyHtml = new JTextArea();
 
-		fillOneLineComponents(p, null, new JLabel("File encoding: "), tfCharset);
-		fillOneLineComponents(p, null, new JLabel("Blog post file: "), tfPostFile);
-		fillOneLineComponents(p,
+		fillOneLineComponents(null, new JLabel("File encoding: "), tfCharset);
+		fillOneLineComponents(null, new JLabel("Blog post file: "), tfPostFile);
+		fillOneLineComponents(
 				new GBC(1, atomicGridy.get(), 1, 1).setFill(GBC.HORIZONTAL).setWeight(1.0, 0.0),
 				new JLabel("Drag & drop file above OR click \"Choose\" button"));
 		final JPanel pButtons = new JPanel();
@@ -73,14 +70,14 @@ class MainPanel extends JPanel {
 		pButtons.add(bPreview);
 		pButtons.add(bPost);
 		pButtons.add(bClose);
-		fillOneLineComponents(p,
+		fillOneLineComponents(
 				new GBC(1, atomicGridy.get(), 1, 1).setFill(GBC.HORIZONTAL).setWeight(1.0, 0.0), pButtons);
-		fillOneLineComponents(p, null, new JLabel("Title: "), tfTitle);
-		fillOneLineComponents(p, null, new JLabel("Tags: "), tfTags);
-		fillOneLineComponents(p, null, new JLabel("Unique token: "), tfUniquetoken);
-		fillOneLineComponents(p, new GBC(0, atomicGridy.get(), columns, 1).setFill(GBC.HORIZONTAL)
+		fillOneLineComponents(null, new JLabel("Title: "), tfTitle);
+		fillOneLineComponents(null, new JLabel("Tags: "), tfTags);
+		fillOneLineComponents(null, new JLabel("Unique token: "), tfUniquetoken);
+		fillOneLineComponents(new GBC(0, atomicGridy.get(), columns, 1).setFill(GBC.HORIZONTAL)
 				.setWeight(1.0, 0.0), new JLabel("Body html:"));
-		fillOneLineComponents(p,
+		fillOneLineComponents(
 				new GBC(0, atomicGridy.get(), columns, 1).setFill(GBC.BOTH).setWeight(1.0, 1.0),
 				new JScrollPane(taBodyHtml));
 
@@ -89,19 +86,7 @@ class MainPanel extends JPanel {
 		taBodyHtml.setEditable(false);
 		taBodyHtml.setLineWrap(false);
 		taBodyHtml.setWrapStyleWord(false);
-		//
 		tfPostFile.setEditable(true);
-		tfPostFile.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent e) {
-				try {
-					currentDirectory = FileUtils.getFileByPathOrURI(tfPostFile.getText()).getParentFile();
-				}
-				catch (URISyntaxException ex) {
-					UiUtils.handleEDTException(frame, ex);
-				}
-			}
-		});
 		//
 		bChoose.addActionListener(new ActionListener() {
 			@Override
@@ -149,13 +134,14 @@ class MainPanel extends JPanel {
 					protected void done() {
 						try {
 							BlogPostInfoHolder holder = get();
+							currentDirectory = blogPostProcessorRef.get().getPostFile().getParentFile();
 							tfTitle.setText(holder.getTitle());
 							tfTags.setText(holder.getTags());
 							tfUniquetoken.setText(holder.getUniquetoken());
 							taBodyHtml.setText(holder.getHtmlBody());
 						}
 						catch (Exception e) {
-							UiUtils.handleEDTException(frame, e);
+							UiUtils.showErrorMessage(frame, "Process failed.", e);
 						}
 					}
 				}.execute();
@@ -177,8 +163,7 @@ class MainPanel extends JPanel {
 					}
 					catch (IOException ex) {
 						ex.printStackTrace();
-						JOptionPane.showMessageDialog(frame, "Open html file failed.", "Error",
-								JOptionPane.ERROR_MESSAGE);
+						UiUtils.showErrorMessage(frame, "Open html file failed.", ex);
 					}
 				}
 			}
@@ -189,7 +174,7 @@ class MainPanel extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				final RemotePanel remotePanel = frame.getRemotePanel();
 				if (!remotePanel.isLoggedIn()) {
-					JOptionPane.showMessageDialog(frame, "Login first.");
+					JOptionPane.showMessageDialog(frame, "Login at [Login] panel.");
 					return;
 				}
 				else {
@@ -213,8 +198,7 @@ class MainPanel extends JPanel {
 							}
 							catch (InterruptedException | ExecutionException e) {
 								e.printStackTrace();
-								JOptionPane.showMessageDialog(frame, "Post failed.", "Error",
-										JOptionPane.ERROR_MESSAGE);
+								UiUtils.showErrorMessage(frame, "Post failed.", e);
 							}
 							finally {
 								UiUtils.setEnabled(true, bChoose, bProcess, bPost, bClose);
@@ -244,17 +228,18 @@ class MainPanel extends JPanel {
 		});
 	}
 
-	private void fillOneLineComponents(final JPanel p, final GBC gbc, final Component... comps) {
+	private void fillOneLineComponents(final GBC gbc, final Component... comps) {
 		int gridx = 0, gridy = atomicGridy.get();
 		if (gbc != null)
 			gbc.setInsets(insets);
 		if (comps.length == 1) {
-			p.add(comps[0], gbc == null ? new GBC(0, gridy, columns, 1).setFill(GBC.HORIZONTAL)
-					.setInsets(insets) : gbc);
+			add(comps[0],
+					gbc == null ? new GBC(0, gridy, columns, 1).setFill(GBC.HORIZONTAL).setInsets(insets)
+							: gbc);
 		}
 		else {
 			for (Component comp : comps) {
-				p.add(comp,
+				add(comp,
 						gbc == null ? new GBC(gridx++, gridy, 1, 1).setFill(GBC.HORIZONTAL).setInsets(insets)
 								: gbc);
 			}

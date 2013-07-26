@@ -38,7 +38,7 @@ public class BloggerClient {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			UiUtils.showErrorMessage(null, "Load conf.properties failed.", e);
 			return;
 		}
 		// show UI
@@ -50,7 +50,7 @@ public class BloggerClient {
 				}
 				catch (Exception e) {
 					e.printStackTrace();
-					JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					UiUtils.showErrorMessage(null, "Create main UI failed.", e);
 					System.exit(1);
 				}
 			}
