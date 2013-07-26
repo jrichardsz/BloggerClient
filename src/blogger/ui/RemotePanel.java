@@ -365,8 +365,7 @@ class RemotePanel extends JPanel {
 							});
 							Post post = self.patchPost(
 									self.postListStore.getByUniquetoken(
-											processor.getBlogPostInfoHolder().getUniquetoken()).getId(),
-									processor.getBlogPostInfoHolder());
+											processor.getBlogPostInfoHolder().getUniquetoken()).getId(), processor);
 							self.postListStore.add(post);
 							System.out.println(post.toPrettyString());
 						}
@@ -443,7 +442,7 @@ class RemotePanel extends JPanel {
 			final int selection = JOptionPane.showConfirmDialog(null, message, "Update post",
 					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
 			if (selection == JOptionPane.YES_OPTION) {
-				patchPost(existingPost.getId(), holder);
+				patchPost(existingPost.getId(), blogPostProcessor);
 			}
 		}
 	}
@@ -453,7 +452,8 @@ class RemotePanel extends JPanel {
 		/*
 		 * can't custom permalink when inserting a post, workaround steps:
 		 * 1) insert a post, set title as unique token of permalink
-		 * 2) update tile to the real title
+		 * 2) server may generate un-expected permalink, accept it
+		 * 3) update title using real title
 		 */
 		//- insert post
 		Post toBeCreatedPost = BloggerUtils.getPostObjForCreate(blog.getUrl(), holder);
@@ -463,6 +463,11 @@ class RemotePanel extends JPanel {
 		System.out.println(createdPost.toPrettyString());
 		postListStore.add(createdPost);
 		postListStore.serializeToFile();
+		//-- update unique token to post file,
+		// no matter generated unique token is the same as expected one or not,
+		// so users could update title freely and won't affect unique token
+		blogPostProcessor.updateServerUniquetokenAndSerialize(BloggerUtils
+				.getPostUrlUniquetoken(createdPost.getUrl()));
 		//- update title
 		/*
 		 * Blogger server has a bug, if only update title,
@@ -470,20 +475,19 @@ class RemotePanel extends JPanel {
 		 * so update content and labels too.
 		 * It's allowed in document https://developers.google.com/blogger/docs/3.0/performance#patch
 		 */
-		Post updatedPost = patchPost(createdPost.getId(), holder);
-		//- if the generated unique token is not the expected one, then accept it and update local metadata
-		String newUniquetoken = BloggerUtils.getPostUrlUniquetoken(updatedPost.getUrl());
-		if (!holder.getUniquetoken().equals(newUniquetoken)) {
-			// update local post file
-			blogPostProcessor.updateNewUniquetokenAndSerialize(newUniquetoken);
-		}
+		patchPost(createdPost.getId(), blogPostProcessor);
 	}
 
-	private Post patchPost(String postId, BlogPostInfoHolder holder) throws IOException {
+	private Post patchPost(String postId, BlogPostProcessor blogPostProcessor) throws IOException {
+		final BlogPostInfoHolder holder = blogPostProcessor.getBlogPostInfoHolder();
 		final Post toBeUpdatedPost = BloggerUtils.getPostObjForUpdate(holder);
 		final Post updatedPost = blogger.posts().patch(blog.getId(), postId, toBeUpdatedPost)
 				.setFields(REQ_POST_FIELDS).execute();
 		System.out.println(updatedPost.toPrettyString());
+		if (!holder.isServerUniquetoken()) {
+			blogPostProcessor.updateServerUniquetokenAndSerialize(BloggerUtils
+					.getPostUrlUniquetoken(updatedPost.getUrl()));
+		}
 		postListStore.add(updatedPost);
 		postListStore.serializeToFile();
 		return updatedPost;

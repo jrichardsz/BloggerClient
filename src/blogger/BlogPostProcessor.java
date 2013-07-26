@@ -95,7 +95,7 @@ public class BlogPostProcessor {
 
 	/**
 	 * take care when changing the implementation, see
-	 * {@link #updateNewUniquetokenAndSerialize(String)}
+	 * {@link #updateServerUniquetokenAndSerialize(String)}
 	 * 
 	 * @return metadata-body array
 	 */
@@ -165,10 +165,16 @@ public class BlogPostProcessor {
 	}
 
 	/**
-	 * update new unique token, serialize to post file, so we'll get the same unique token at next
-	 * time
+	 * update server unique token, serialize to post file, make sure it's the same as server's.
+	 * <p>
+	 * new unique token will be saved as a new property "uniquetoken", since server may return
+	 * permalink like http://zenzhong8383.blogspot.com/2013/07/test-3-zh_25.html, '_' is included,
+	 * (other characters may be put there too), '_' will be replaced as '-' in my logic, in order to
+	 * get the same unique token as server's, so did it.
+	 * 
+	 * @see #parseBlogPostMetadata(String)
 	 */
-	public void updateNewUniquetokenAndSerialize(String newUniquetoken) throws IOException {
+	public void updateServerUniquetokenAndSerialize(String serverUniquetoken) throws IOException {
 		final File file = postFile;
 		final File tempFile = FileUtils.getTempFile(file);
 		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
@@ -178,17 +184,20 @@ public class BlogPostProcessor {
 			writer.newLine();
 			writer.write("title = ");
 			writer.write(blogPostInfoHolder.getTitle());
-			writer.write(" || ");
-			writer.write(newUniquetoken);
 			writer.newLine();
-			writer.write("tags = ");
-			writer.write(blogPostInfoHolder.getTags());
-			writer.newLine();
+			if (!blogPostInfoHolder.getTags().isEmpty()) {
+				writer.write("tags = ");
+				writer.write(blogPostInfoHolder.getTags());
+				writer.newLine();
+			}
 			if (!blogPostInfoHolder.getLocale().isEmpty()) {
 				writer.write("locale = ");
 				writer.write(blogPostInfoHolder.getLocale());
 				writer.newLine();
 			}
+			writer.write("uniquetoken = ");
+			writer.write(serverUniquetoken);
+			writer.newLine();
 			writer.write(METADATA_END_TAG);
 			writer.newLine();
 			writer.write(blogPostInfoHolder.getBody());
@@ -201,17 +210,17 @@ public class BlogPostProcessor {
 		if (!tempFile.renameTo(file)) {
 			throw new IOException(String.format("move [%s] to [%s] failed", tempFile, file));
 		}
-		blogPostInfoHolder.setUniquetoken(newUniquetoken);
+		blogPostInfoHolder.setUniquetoken(serverUniquetoken);
 	}
 
 	/**
-	 * just split properties text
+	 * just split properties text, possible key: {title, tags, locale, uniquetoken}
 	 */
 	private void parseBlogPostMetadata(final String metadataStr) throws IOException {
 		Properties props = new Properties();
 		props.load(new StringReader(metadataStr));
 		blogPostInfoHolder.setMetadata(props.getProperty("title"), props.getProperty("tags"),
-				props.getProperty("locale"));
+				props.getProperty("locale"), props.getProperty("uniquetoken"));
 	}
 
 	private void removeStartingEndingNewlines(final StringBuilder body) {

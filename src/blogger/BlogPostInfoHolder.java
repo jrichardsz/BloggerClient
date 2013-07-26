@@ -8,6 +8,8 @@ import blogger.util.LogicAssert;
 public class BlogPostInfoHolder {
 
 	private volatile String title, tags, locale, uniquetoken, body;
+	/** indicate whether the uniquetoken be from server or not */
+	private volatile boolean isServerUniquetoken;
 
 	private volatile File htmlFile;
 	/** processed post file's body, it's html */
@@ -16,7 +18,7 @@ public class BlogPostInfoHolder {
 	public BlogPostInfoHolder() {
 	}
 
-	void setMetadata(String title, String tags, String locale) {
+	void setMetadata(String title, String tags, String locale, String serverUniquetoken) {
 		if (title == null) { // tags/locale could be null
 			throw new IllegalArgumentException("title can't be null");
 		}
@@ -35,12 +37,16 @@ public class BlogPostInfoHolder {
 		}
 		this.tags = (tags == null ? "" : tags.trim());
 		this.locale = (locale == null ? "" : locale.trim());
-		this.uniquetoken = enTitle.replace(' ', '-').replace('.', '-').replace('_', '-').toLowerCase();
-		// in order to verify blanks by mistake
-		LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0,
-				"invalid, -- is not allowed, uniquetoken=%s", uniquetoken);
-		LogicAssert.assertTrue(UNIQUETOKEN_PATTERN.matcher(uniquetoken).matches(),
-				"invalid, allowed character is [A-Za-z0-9 ._-], uniquetoken=%s", uniquetoken);
+		isServerUniquetoken = (serverUniquetoken != null && !serverUniquetoken.trim().isEmpty());
+		this.uniquetoken = (isServerUniquetoken ? serverUniquetoken.trim() : enTitle.replace(' ', '-')
+				.replace('.', '-').replace('_', '-').toLowerCase());
+		// verify when uniquetoken is user defined
+		if (!isServerUniquetoken) {
+			LogicAssert.assertTrue(uniquetoken.indexOf("--") < 0,
+					"invalid, -- is not allowed, uniquetoken=%s", uniquetoken); // verify blanks by mistake
+			LogicAssert.assertTrue(UNIQUETOKEN_PATTERN.matcher(uniquetoken).matches(),
+					"invalid, allowed character is [A-Za-z0-9 ._-], uniquetoken=%s", uniquetoken);
+		}
 	}
 
 	private static final Pattern UNIQUETOKEN_PATTERN = Pattern
@@ -76,6 +82,11 @@ public class BlogPostInfoHolder {
 	void setUniquetoken(String newUniquetoken) {
 		// unique token could be over-written
 		this.uniquetoken = newUniquetoken;
+	}
+
+	/** indicate whether the uniquetoken be from server or not */
+	public boolean isServerUniquetoken() {
+		return isServerUniquetoken;
 	}
 
 	String getBody() {
