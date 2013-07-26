@@ -91,7 +91,7 @@ public class BlogPostInfoHolder {
 		return htmlFile;
 	}
 
-	void setHtmlFile(File htmlFile) {
+	public void setHtmlFile(File htmlFile) {
 		LogicAssert.assertTrue(htmlFile != null && this.htmlFile == null, "");
 		this.htmlFile = htmlFile;
 	}

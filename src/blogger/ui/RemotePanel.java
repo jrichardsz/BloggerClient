@@ -293,7 +293,6 @@ class RemotePanel extends JPanel {
 				File[] postFiles = postDir.listFiles(new FileFilter() {
 					@Override
 					public boolean accept(File pathname) {
-						//TODO do not check ends with ".txt" here, generate post html file to cache folder
 						return !pathname.isHidden() && pathname.isFile() && pathname.getName().endsWith(".txt");
 					}
 				});
@@ -311,9 +310,6 @@ class RemotePanel extends JPanel {
 						}
 						if (postListStore.getByUniquetoken(processor.getBlogPostInfoHolder().getUniquetoken()) != null) {
 							processorList.add(processor);
-						}
-						else {
-							processor.getBlogPostInfoHolder().getHtmlFile().delete();
 						}
 					}
 					SwingUtilities.invokeLater(new Runnable() {
@@ -371,7 +367,6 @@ class RemotePanel extends JPanel {
 									self.postListStore.getByUniquetoken(
 											processor.getBlogPostInfoHolder().getUniquetoken()).getId(),
 									processor.getBlogPostInfoHolder());
-							processor.getBlogPostInfoHolder().getHtmlFile().delete();
 							self.postListStore.add(post);
 							System.out.println(post.toPrettyString());
 						}

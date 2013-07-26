@@ -156,14 +156,17 @@ class MainPanel extends JPanel {
 				if (blogPostProcessor != null
 						&& (holder = blogPostProcessor.getBlogPostInfoHolder()) != null) {
 					File htmlFile = holder.getHtmlFile();
-					if (htmlFile == null)
-						return;
 					try {
+						if (htmlFile == null) {
+							htmlFile = blogPostProcessor.writePostHtmlToFile();
+							htmlFile.deleteOnExit();
+							blogPostProcessor.getBlogPostInfoHolder().setHtmlFile(htmlFile);
+						}
 						Desktop.getDesktop().open(htmlFile);
 					}
 					catch (IOException ex) {
 						ex.printStackTrace();
-						UiUtils.showErrorMessage(frame, "Open html file failed.", ex);
+						UiUtils.showErrorMessage(frame, "Write/Open html file failed.", ex);
 					}
 				}
 			}

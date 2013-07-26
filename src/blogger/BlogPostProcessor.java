@@ -1,14 +1,13 @@
 package blogger;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -88,9 +87,6 @@ public class BlogPostProcessor {
 		for (String assetRelativePath : parsingContext.assetRelativePathSet) {
 			body.insert(0, AssetsLoader.readAssetAsText(assetRelativePath));
 		}
-		File htmlFile = writeToPostHtmlFile(body, postFile.getParent(), postFile.getName(), charsetName);
-		htmlFile.deleteOnExit();
-		blogPostInfoHolder.setHtmlFile(htmlFile);
 		blogPostInfoHolder.setHtmlBody(body.toString());
 	}
 
@@ -763,14 +759,17 @@ public class BlogPostProcessor {
 	}
 
 	/**
+	 * write post html as file in post file directory
+	 * 
 	 * @return generated post html file
 	 */
-	private File writeToPostHtmlFile(StringBuilder body, String postFileDir, String postFileName,
-			String charsetName) throws IOException {
-		File postHtmlFile = new File(postFileDir, postFileName + "-handled-post-file.html");
+	public File writePostHtmlToFile() throws IOException {
+		File postHtmlFile = new File(postFile.getParent(), postFile.getName()
+				+ "-handled-post-file.html");
 		// won't check blogHtmlFile exist or not, just overwrite
-		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(postHtmlFile))) {
-			out.write(body.toString().getBytes(charsetName));
+		try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+				postHtmlFile), charsetName))) {
+			writer.write(blogPostInfoHolder.getHtmlBody());
 		}
 		return postHtmlFile;
 	}
