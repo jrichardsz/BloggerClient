@@ -175,7 +175,7 @@ class RemotePanel extends JPanel {
 		bUpdateAll.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				showUpdateAllStep1Dialog();
+				showUpdateAllStep1Frame();
 			}
 		});
 
@@ -260,14 +260,13 @@ class RemotePanel extends JPanel {
 		}.execute();
 	}
 
-	private void showUpdateAllStep1Dialog() {
+	private void showUpdateAllStep1Frame() {
 		final JPanel p = new JPanel();
 		final JTextField tfCharset = new JTextField("UTF-8");
 		final JTextField tfPostDir = new JTextField();
 		final JButton bNext = new JButton("Next");
 
 		final int distance = 5;
-		p.setPreferredSize(new Dimension(800, 200));
 		p.setLayout(new GridBagLayout());
 		p.add(new JLabel("Charset:"), new GBC(0, 0, 1, 1).setInsets(distance));
 		p.add(tfCharset, new GBC(1, 0, 1, 1).setFill(GBC.HORIZONTAL).setInsets(distance));
@@ -311,30 +310,33 @@ class RemotePanel extends JPanel {
 						if (postListStore.getByUniquetoken(processor.getBlogPostInfoHolder().getUniquetoken()) != null) {
 							processorList.add(processor);
 						}
-					}
-					SwingUtilities.invokeLater(new Runnable() {
-						@Override
-						public void run() {
-							showUpdateAllStep2Dialog(processorList);
+						else {
+							System.out.println("find not matched post: " + processor.getBlogPostInfoHolder());
 						}
-					});
+					}
+					System.out.println("processorList.size=" + processorList.size());
+					showUpdateAllStep2Frame(processorList);
 				}
 			}
 		});
-		Object[] options = new Object[] { bNext, "Cancel" };
-		JOptionPane.showOptionDialog(frame, p, "Update all step 1", JOptionPane.YES_NO_OPTION,
-				JOptionPane.PLAIN_MESSAGE, null, options, null);
+		final JFrame f = new JFrame("Update all step 1");
+		final JPanel contentPane = new JPanel();
+		contentPane.setLayout(new BorderLayout());
+		contentPane.add(p, BorderLayout.CENTER);
+		contentPane.add(bNext, BorderLayout.SOUTH);
+		f.setContentPane(contentPane);
+		f.setSize(800, 200);
+		f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		f.setLocationRelativeTo(null);
+		f.setVisible(true);
 	}
 
-	private void showUpdateAllStep2Dialog(final List<BlogPostProcessor> processorList) {
-		final JFrame f = new JFrame("Update all step 2");
+	private void showUpdateAllStep2Frame(final List<BlogPostProcessor> processorList) {
 		final JPanel p = new JPanel();
 		final JTextField tfCurrentTask = new JTextField();
 		final JTextArea taTaskList = new JTextArea();
 		final JButton bUpdateAll = new JButton("Update all");
 
-		f.setContentPane(p);
-		f.setSize(800, 600);
 		p.setLayout(new BorderLayout());
 		p.add(tfCurrentTask, BorderLayout.NORTH);
 		p.add(new JScrollPane(taTaskList), BorderLayout.CENTER);
@@ -387,6 +389,11 @@ class RemotePanel extends JPanel {
 				}.execute();
 			}
 		});
+		final JFrame f = new JFrame("Update all step 2");
+		f.setContentPane(p);
+		f.setSize(800, 600);
+		f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		f.setLocationRelativeTo(null);
 		f.setVisible(true);
 	}
 
