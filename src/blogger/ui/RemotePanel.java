@@ -1,11 +1,15 @@
 package blogger.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +18,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import blogger.BlogPostInfoHolder;
@@ -26,6 +34,7 @@ import blogger.BloggerAPIBuilder;
 import blogger.BloggerUtils;
 import blogger.LocalFileLocator;
 import blogger.PostListMemoryStore;
+import blogger.util.FileUtils;
 import blogger.util.UiUtils;
 
 import com.google.api.services.blogger.Blogger;
@@ -119,8 +128,9 @@ class RemotePanel extends JPanel {
 		p.removeAll();
 		p.setLayout(new GridBagLayout());
 		final JButton bBlogDetails = new JButton("Blog details");
-		final JLabel lBlog = new JLabel();
+		final JLabel lBlog = new JLabel("Loading blogs...");
 		final JButton bRetry = new JButton("Retry");
+		final JButton bUpdateAll = new JButton("Update all");
 
 		final int columns = 1, distance = 5;
 		final AtomicInteger gridyAtomic = new AtomicInteger(0);
@@ -128,15 +138,17 @@ class RemotePanel extends JPanel {
 		p.add(new JLabel(username),
 				new GBC(0, gridyAtomic.getAndAdd(1), columns, 1).setFill(GBC.HORIZONTAL)
 						.setInsets(distance));
-		lBlog.setText("Loading blogs...");
 		p.add(bBlogDetails, new GBC(0, gridyAtomic.getAndAdd(1), columns, 1).setFill(GBC.HORIZONTAL)
 				.setInsets(distance));
 		p.add(lBlog, new GBC(0, gridyAtomic.getAndAdd(1), columns, 1).setFill(GBC.HORIZONTAL)
 				.setInsets(distance));
 		p.add(bRetry, new GBC(0, gridyAtomic.getAndAdd(1), columns, 1).setFill(GBC.HORIZONTAL)
 				.setInsets(distance));
+		p.add(bUpdateAll, new GBC(0, gridyAtomic.getAndAdd(1), columns, 1).setFill(GBC.HORIZONTAL)
+				.setInsets(distance));
 
 		bRetry.setVisible(false);
+		bUpdateAll.setVisible(false);
 
 		bBlogDetails.addActionListener(new ActionListener() {
 			@Override
@@ -157,6 +169,13 @@ class RemotePanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				self.start();
+			}
+		});
+
+		bUpdateAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showUpdateAllStep1Dialog();
 			}
 		});
 
@@ -220,6 +239,8 @@ class RemotePanel extends JPanel {
 						lBlog.setText(blog.getUrl());
 						if (bRetry.isVisible())
 							bRetry.setVisible(false);
+						if (!bUpdateAll.isVisible())
+							bUpdateAll.setVisible(true);
 					}
 					else {
 						if (!bRetry.isVisible())
@@ -237,6 +258,142 @@ class RemotePanel extends JPanel {
 				}
 			}
 		}.execute();
+	}
+
+	private void showUpdateAllStep1Dialog() {
+		final JPanel p = new JPanel();
+		final JTextField tfCharset = new JTextField("UTF-8");
+		final JTextField tfPostDir = new JTextField();
+		final JButton bNext = new JButton("Next");
+
+		final int distance = 5;
+		p.setPreferredSize(new Dimension(800, 200));
+		p.setLayout(new GridBagLayout());
+		p.add(new JLabel("Charset:"), new GBC(0, 0, 1, 1).setInsets(distance));
+		p.add(tfCharset, new GBC(1, 0, 1, 1).setFill(GBC.HORIZONTAL).setInsets(distance));
+		p.add(new JLabel("Post dir:"), new GBC(0, 1, 1, 1).setInsets(distance));
+		p.add(tfPostDir, new GBC(1, 1, 1, 1).setFill(GBC.HORIZONTAL).setInsets(distance));
+
+		tfCharset.setPreferredSize(new Dimension(600, 30));
+		tfPostDir.setPreferredSize(new Dimension(600, 30));
+
+		bNext.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String charsetName = tfCharset.getText();
+				File postDir = null;
+				try {
+					postDir = FileUtils.getFileByPathOrURI(tfPostDir.getText());
+				}
+				catch (URISyntaxException ex) {
+					ex.printStackTrace();
+					UiUtils.showErrorMessage(frame, "wrong post directory", ex);
+					return;
+				}
+				File[] postFiles = postDir.listFiles(new FileFilter() {
+					@Override
+					public boolean accept(File pathname) {
+						//TODO do not check ends with ".txt" here, generate post html file to cache folder
+						return !pathname.isHidden() && pathname.isFile() && pathname.getName().endsWith(".txt");
+					}
+				});
+				if (postFiles != null) {
+					final List<BlogPostProcessor> processorList = new ArrayList<>();
+					for (File postFile : postFiles) {
+						BlogPostProcessor processor = new BlogPostProcessor(postFile, charsetName);
+						try {
+							processor.processPostFile();
+						}
+						catch (Exception ex) {
+							ex.printStackTrace();
+							UiUtils.showErrorMessage(frame, "Process post file failed.", ex);
+							return;
+						}
+						if (postListStore.getByUniquetoken(processor.getBlogPostInfoHolder().getUniquetoken()) != null) {
+							processorList.add(processor);
+						}
+						else {
+							processor.getBlogPostInfoHolder().getHtmlFile().delete();
+						}
+					}
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							showUpdateAllStep2Dialog(processorList);
+						}
+					});
+				}
+			}
+		});
+		Object[] options = new Object[] { bNext, "Cancel" };
+		JOptionPane.showOptionDialog(frame, p, "Update all step 1", JOptionPane.YES_NO_OPTION,
+				JOptionPane.PLAIN_MESSAGE, null, options, null);
+	}
+
+	private void showUpdateAllStep2Dialog(final List<BlogPostProcessor> processorList) {
+		final JFrame f = new JFrame("Update all step 2");
+		final JPanel p = new JPanel();
+		final JTextField tfCurrentTask = new JTextField();
+		final JTextArea taTaskList = new JTextArea();
+		final JButton bUpdateAll = new JButton("Update all");
+
+		f.setContentPane(p);
+		f.setSize(800, 600);
+		p.setLayout(new BorderLayout());
+		p.add(tfCurrentTask, BorderLayout.NORTH);
+		p.add(new JScrollPane(taTaskList), BorderLayout.CENTER);
+		p.add(bUpdateAll, BorderLayout.SOUTH);
+
+		tfCurrentTask.setEditable(false);
+		taTaskList.setEditable(false);
+		StringBuilder taskList = new StringBuilder(1024);
+		for (final BlogPostProcessor processor : processorList) {
+			taskList.append(processor.getBlogPostInfoHolder().getTitle()).append('\n');
+		}
+		taTaskList.setText(taskList.toString());
+
+		bUpdateAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				bUpdateAll.setEnabled(false);
+				new SwingWorker<Void, Void>() {
+					@Override
+					protected Void doInBackground() throws Exception {
+						for (final BlogPostProcessor processor : processorList) {
+							SwingUtilities.invokeLater(new Runnable() {
+								@Override
+								public void run() {
+									tfCurrentTask.setText(String.format("Updating [%s]", processor
+											.getBlogPostInfoHolder().getTitle()));
+								}
+							});
+							Post post = self.patchPost(
+									self.postListStore.getByUniquetoken(
+											processor.getBlogPostInfoHolder().getUniquetoken()).getId(),
+									processor.getBlogPostInfoHolder());
+							processor.getBlogPostInfoHolder().getHtmlFile().delete();
+							self.postListStore.add(post);
+							System.out.println(post.toPrettyString());
+						}
+						self.postListStore.serializeToFile();
+						return null;
+					}
+
+					@Override
+					public void done() {
+						try {
+							get();
+							tfCurrentTask.setText("Done");
+						}
+						catch (InterruptedException | ExecutionException e) {
+							e.printStackTrace();
+							UiUtils.showErrorMessage(frame, "Update failed.", e);
+						}
+					}
+				}.execute();
+			}
+		});
+		f.setVisible(true);
 	}
 
 	private List<Blog> loadBlogs() throws IOException {
