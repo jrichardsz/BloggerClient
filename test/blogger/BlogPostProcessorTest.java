@@ -35,7 +35,8 @@ public class BlogPostProcessorTest {
 
 	@Test
 	public void processBlogFileTest() throws Exception {
-		BlogPostInfoHolder holder = blogPostProcessor.processPostFile();
+		blogPostProcessor.processPostFile();
+		BlogPostInfoHolder holder = blogPostProcessor.getBlogPostInfoHolder();
 		System.out.println(holder);
 		System.out.println(holder.getHtmlBody());
 	}

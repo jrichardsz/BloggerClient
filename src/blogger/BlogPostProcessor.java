@@ -43,7 +43,7 @@ public class BlogPostProcessor {
 		return blogPostInfoHolder;
 	}
 
-	public BlogPostInfoHolder processPostFile() throws Exception {
+	public void processPostFile() throws Exception {
 		System.out.println(String.format("processPostFile> file=%s", postFile));
 		String[] mbArray = readMetadataAndBody();
 		parseBlogPostMetadata(mbArray[0]);
@@ -85,7 +85,6 @@ public class BlogPostProcessor {
 		htmlFile.deleteOnExit();
 		blogPostInfoHolder.setHtmlFile(htmlFile);
 		blogPostInfoHolder.setHtmlBody(body.toString());
-		return blogPostInfoHolder;
 	}
 
 	private static final String METADATA_START_TAG = "<metadata>";

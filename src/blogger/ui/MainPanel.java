@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,6 +53,7 @@ class MainPanel extends JPanel {
 		final JTextField tfCharset = new JTextField(DEFAULT_CHARSET_NAME);
 		final JButton bChoose = new JButton("Choose");
 		final JButton bProcess = new JButton("Process");
+		final JButton bPreview = new JButton("Preview");
 		final JButton bPost = new JButton("Post");
 		final JButton bClose = new JButton("Close");
 		final JTextField tfPostFile = new JTextField();
@@ -68,6 +70,7 @@ class MainPanel extends JPanel {
 		final JPanel pButtons = new JPanel();
 		pButtons.add(bChoose);
 		pButtons.add(bProcess);
+		pButtons.add(bPreview);
 		pButtons.add(bPost);
 		pButtons.add(bClose);
 		fillOneLineComponents(p,
@@ -138,7 +141,8 @@ class MainPanel extends JPanel {
 							charsetName = DEFAULT_CHARSET_NAME;
 						BlogPostProcessor blogPostProcessor = new BlogPostProcessor(postFile, charsetName);
 						blogPostProcessorRef.set(blogPostProcessor);
-						return blogPostProcessor.processPostFile();
+						blogPostProcessor.processPostFile();
+						return blogPostProcessor.getBlogPostInfoHolder();
 					}
 
 					@Override
@@ -149,13 +153,34 @@ class MainPanel extends JPanel {
 							tfTags.setText(holder.getTags());
 							tfUniquetoken.setText(holder.getUniquetoken());
 							taBodyHtml.setText(holder.getHtmlBody());
-							Desktop.getDesktop().open(holder.getHtmlFile());
 						}
 						catch (Exception e) {
 							UiUtils.handleEDTException(frame, e);
 						}
 					}
 				}.execute();
+			}
+		});
+		//
+		bPreview.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BlogPostProcessor blogPostProcessor = blogPostProcessorRef.get();
+				BlogPostInfoHolder holder;
+				if (blogPostProcessor != null
+						&& (holder = blogPostProcessor.getBlogPostInfoHolder()) != null) {
+					File htmlFile = holder.getHtmlFile();
+					if (htmlFile == null)
+						return;
+					try {
+						Desktop.getDesktop().open(htmlFile);
+					}
+					catch (IOException ex) {
+						ex.printStackTrace();
+						JOptionPane.showMessageDialog(frame, "Open html file failed.", "Error",
+								JOptionPane.ERROR_MESSAGE);
+					}
+				}
 			}
 		});
 		//
