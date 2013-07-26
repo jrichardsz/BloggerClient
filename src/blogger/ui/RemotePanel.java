@@ -41,8 +41,8 @@ class RemotePanel extends JPanel {
 
 	private String username;
 	private Blogger blogger;
-	private Blog blog;
-	private PostListMemoryStore postListStore;
+	private volatile Blog blog;
+	private volatile PostListMemoryStore postListStore;
 
 	public RemotePanel(BloggerClientFrame frame) throws Exception {
 		this.frame = frame;
@@ -66,6 +66,7 @@ class RemotePanel extends JPanel {
 				}
 				catch (IOException | GeneralSecurityException ex) {
 					ex.printStackTrace();
+					//TODO add "Open conf folder" button
 					String message = String.format("Connect to server failed, try to enable proxy at %s",
 							LocalFileLocator.getInstance().getConfFile());
 					UiUtils.showErrorMessage(frame, message, ex);
@@ -74,6 +75,43 @@ class RemotePanel extends JPanel {
 				self.start();
 			}
 		});
+	}
+
+	private String showUsernameInputDialog() {
+		String errorMessage = null;
+		while (true) {
+			final JPanel p = new JPanel();
+			p.setLayout(new GridBagLayout());
+			final int distance = 5;
+			final JTextField tfUsername = new JTextField();
+			p.add(new JLabel("Input username, anyone you like, not Google Account."), new GBC(0, 0, 2, 1)
+					.setFill(GBC.HORIZONTAL).setInsets(distance));
+			p.add(new JLabel("Username:"), new GBC(0, 1, 1, 1).setInsets(distance));
+			p.add(tfUsername, new GBC(1, 1, 1, 1).setFill(GBC.HORIZONTAL).setInsets(distance));
+			if (errorMessage != null) {
+				final JLabel label = new JLabel(errorMessage);
+				label.setForeground(Color.RED);
+				p.add(label, new GBC(0, 2, 2, 2).setFill(GBC.HORIZONTAL).setInsets(distance));
+			}
+			final Pattern usernamePattern = Pattern.compile("^[A-Za-z0-9._-]+$");
+			final Object[] options = new Object[] { "   OK   ", " Cancel " };
+			final int selection = JOptionPane.showOptionDialog(frame, p, "Input Username",
+					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, null);
+			if (selection == JOptionPane.YES_OPTION) {
+				final String username = tfUsername.getText();
+				if (usernamePattern.matcher(username).matches()) {
+					return username;
+				}
+				else {
+					errorMessage = "Invalid username, valid format: [A-Za-z0-9._-]+";
+					continue;
+				}
+			}
+			else {
+				errorMessage = "Must input a username.";
+				continue;
+			}
+		}
 	}
 
 	private void start() {
@@ -123,14 +161,10 @@ class RemotePanel extends JPanel {
 		});
 
 		new SwingWorker<Integer, Void>() {
-			private final int retSucceed = 0, retLoadBlogsFailed = 1, retNoBlogs = 2;
-			private static final String REQ_POSTLIST_FIELDS = "items(id,title,url,labels,published,updated)";
+			private final int retSucceed = 0, retNoBlogs = 2;
 
 			@Override
 			protected Integer doInBackground() throws Exception {
-				final Long maxResults = 20L;
-				final Blogger blogger = self.blogger;
-
 				// load blogs
 				BlogList blogList = new BlogList();
 				blogList.setItems(new ArrayList<Blog>());
@@ -146,15 +180,7 @@ class RemotePanel extends JPanel {
 					}
 				}
 				if (blogList.getItems().isEmpty()) {
-					List<Blog> blogs = null;
-					try {
-						blogs = blogger.blogs().listByUser("self").execute().getItems();
-						System.out.println("blogs count (from remote): " + blogList.getItems().size());
-					}
-					catch (IOException ex) {
-						ex.printStackTrace();
-						return retLoadBlogsFailed;
-					}
+					List<Blog> blogs = loadBlogs();
 					if (blogs == null || blogs.isEmpty()) {
 						return retNoBlogs;
 					}
@@ -181,16 +207,7 @@ class RemotePanel extends JPanel {
 					postListStore.clear();
 				}
 				if (postListStore.isEmpty()) {
-					List<Post> posts = blogger.posts().list(blog.getId()).setFields(REQ_POSTLIST_FIELDS)
-							.setMaxResults(maxResults).execute().getItems();
-					while (posts != null && !posts.isEmpty()) {
-						postListStore.addAll(posts);
-						posts = blogger.posts().list(blog.getId()).setFields(REQ_POSTLIST_FIELDS)
-								.setMaxResults(maxResults).setEndDate(posts.get(posts.size() - 1).getPublished())
-								.execute().getItems();
-					}
-					System.out.println("posts count (from remote): " + postListStore.size());
-					postListStore.serializeToFile();
+					loadPosts();
 				}
 				return retSucceed;
 			}
@@ -207,11 +224,7 @@ class RemotePanel extends JPanel {
 					else {
 						if (!bRetry.isVisible())
 							bRetry.setVisible(true);
-						if (ret == retLoadBlogsFailed) {
-							JOptionPane.showMessageDialog(frame, "Load blogs failed.", "Error",
-									JOptionPane.ERROR_MESSAGE);
-						}
-						else if (ret == retNoBlogs) {
+						if (ret == retNoBlogs) {
 							lBlog.setText("No blogs.");
 						}
 					}
@@ -220,47 +233,35 @@ class RemotePanel extends JPanel {
 					e.printStackTrace();
 					if (!bRetry.isVisible())
 						bRetry.setVisible(true);
-					UiUtils.showErrorMessage(frame, "Load posts failed.", e);
+					UiUtils.showErrorMessage(frame, "Load blogs/posts failed.", e);
 				}
 			}
 		}.execute();
 	}
 
-	private String showUsernameInputDialog() {
-		String errorMessage = null;
-		while (true) {
-			final JPanel p = new JPanel();
-			p.setLayout(new GridBagLayout());
-			final int distance = 5;
-			final JTextField tfUsername = new JTextField();
-			p.add(new JLabel("Input username, anyone you like, not Google Account."), new GBC(0, 0, 2, 1)
-					.setFill(GBC.HORIZONTAL).setInsets(distance));
-			p.add(new JLabel("Username:"), new GBC(0, 1, 1, 1).setInsets(distance));
-			p.add(tfUsername, new GBC(1, 1, 1, 1).setFill(GBC.HORIZONTAL).setInsets(distance));
-			if (errorMessage != null) {
-				final JLabel label = new JLabel(errorMessage);
-				label.setForeground(Color.RED);
-				p.add(label, new GBC(0, 2, 2, 2).setFill(GBC.HORIZONTAL).setInsets(distance));
-			}
-			final Pattern usernamePattern = Pattern.compile("^[A-Za-z0-9._-]+$");
-			final Object[] options = new Object[] { "   OK   ", " Cancel " };
-			final int selection = JOptionPane.showOptionDialog(frame, p, "Input Username",
-					JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, null);
-			if (selection == JOptionPane.YES_OPTION) {
-				final String username = tfUsername.getText();
-				if (usernamePattern.matcher(username).matches()) {
-					return username;
-				}
-				else {
-					errorMessage = "Invalid username, valid format: [A-Za-z0-9._-]+";
-					continue;
-				}
-			}
-			else {
-				errorMessage = "Must input a username.";
-				continue;
-			}
+	private List<Blog> loadBlogs() throws IOException {
+		List<Blog> blogs = blogger.blogs().listByUser("self").execute().getItems();
+		System.out.println("blogs count (from remote): " + (blogs == null ? 0 : blogs.size()));
+		return blogs;
+	}
+
+	private static final String REQ_POSTLIST_FIELDS = "items(id,title,url,labels,published,updated)";
+
+	private void loadPosts() throws IOException {
+		final long maxResults = 20L;
+		final Blogger blogger = self.blogger;
+		final PostListMemoryStore postListStore = self.postListStore;
+		final Blog blog = self.blog;
+		List<Post> posts = blogger.posts().list(blog.getId()).setFields(REQ_POSTLIST_FIELDS)
+				.setMaxResults(maxResults).execute().getItems();
+		while (posts != null && !posts.isEmpty()) {
+			postListStore.addAll(posts);
+			posts = blogger.posts().list(blog.getId()).setFields(REQ_POSTLIST_FIELDS)
+					.setMaxResults(maxResults).setEndDate(posts.get(posts.size() - 1).getPublished())
+					.execute().getItems();
 		}
+		System.out.println("posts count (from remote): " + postListStore.size());
+		postListStore.serializeToFile();
 	}
 
 	boolean isLoggedIn() {
