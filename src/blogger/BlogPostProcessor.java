@@ -66,16 +66,18 @@ public class BlogPostProcessor {
 
 		// add TOC to the beginning
 		if (!parsingContext.notoc) {
-			parsingContext.assetRelativePathSet.add("css/toc.css");
 			final List<BlogPostHeaderMetadata> headerMetadataList = parsingContext.headerMetadataList;
 			if (headerMetadataList.size() > 0) {
+				parsingContext.assetRelativePathSet.add("css/toc.css");
+				parsingContext.assetRelativePathSet.add("js/showhide.js");
 				parsingContext.assetRelativePathSet.add("css/headers.css");
+				final StringBuilder toc = new StringBuilder(1024);
+				int headersCnt = generateTOC(toc, headerMetadataList, -1, new boolean[7]);
+				LogicAssert.assertTrue(headersCnt == headerMetadataList.size(),
+						"headersCnt (%d) != headerMetadataList.size (%d)", headersCnt,
+						headerMetadataList.size());
+				body.insert(0, toc);
 			}
-			final StringBuilder toc = new StringBuilder(1024);
-			int headersCnt = generateTOC(toc, headerMetadataList, -1, new boolean[7]);
-			LogicAssert.assertTrue(headersCnt == headerMetadataList.size(),
-					"headersCnt (%d) != headerMetadataList.size (%d)", headersCnt, headerMetadataList.size());
-			body.insert(0, toc);
 		}
 
 		// insert blogger more anchor (<!--more-->) in blog list page to hide TOC.
