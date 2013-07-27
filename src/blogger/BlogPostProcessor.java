@@ -53,13 +53,13 @@ public class BlogPostProcessor {
 		System.out.println(String.format("processPostFile> file=%s", postFile));
 		String[] mbArray = readMetadataAndBody();
 		parseBlogPostMetadata(mbArray[0]);
+		blogPostInfoHolder.setBody(mbArray[1]);
 		final StringBuilder body = new StringBuilder(mbArray[1]);
 		mbArray = null;
-		blogPostInfoHolder.setBody(body.toString());
-		StringUtils.replaceAllStr(body, "\r\n", "\n");
-		StringUtils.replaceAllStr(body, "\r", "\n");
+		StringUtils.replaceAll(body, "\r\n", "\n");
+		StringUtils.replaceAll(body, "\r", "\n");
 		removeStartingEndingNewlines(body);
-		StringUtils.replaceCharToStr(body, '\t', "    "); // 4 white spaces
+		StringUtils.replaceAll(body, '\t', "    "); // 4 white spaces
 		final ParsingContext parsingContext = new ParsingContext();
 		processPostFile0(body, parsingContext);
 		expandSpecialMacros(body);
@@ -268,7 +268,7 @@ public class BlogPostProcessor {
 			for (int index = macroRegionList.size() - 1; index >= 0;) {
 				final MacroRegion macroRegion = macroRegionList.get(index);
 				if (macroRegion.macroName.equals(HtmlMacro.END_TAG)) {
-					HtmlUtils.replaceHtmlEntities(body, macroRegion.end, previousMacroRegion.start);
+					HtmlUtils.replaceHtmlEntities(body, macroRegion.end, previousMacroRegion.start + 1);
 					previousMacroRegion = macroRegionList.get(macroRegion.pairedMacroRegionIndex);
 					index -= (macroRegion.index - macroRegion.pairedMacroRegionIndex);
 				}
@@ -277,7 +277,7 @@ public class BlogPostProcessor {
 				}
 			}
 			if (previousMacroRegion.start > 0) {
-				HtmlUtils.replaceHtmlEntities(body, 0, previousMacroRegion.start);
+				HtmlUtils.replaceHtmlEntities(body, 0, previousMacroRegion.start + 1);
 			}
 			macroRegionList.clear();
 			previousMacroRegion = null;
@@ -687,7 +687,7 @@ public class BlogPostProcessor {
 			// append current time millis to html elements id,
 			// since blog list page may include many TOC, it'll cause issue.
 			final StringBuilder tocHeadHtml = AssetsLoader.readAssetAsText("html/toc-head.html");
-			StringUtils.replaceFirstStr(tocHeadHtml, "${toc-title}", blogPostInfoHolder.getLocale()
+			StringUtils.replaceFirst(tocHeadHtml, "${toc-title}", blogPostInfoHolder.getLocale()
 					.equals("zh") ? "目录" : "Contents");
 			toc.append(tocHeadHtml);
 

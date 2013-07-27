@@ -8,7 +8,7 @@ public class RevMacro extends Macro {
 	@Override
 	public String getHtml() {
 		StringBuilder str = new StringBuilder(super.getHtml());
-		StringUtils.replaceFirstStr(str, "${rev}", getBlogPostProcessor().getBlogPostInfoHolder()
+		StringUtils.replaceFirst(str, "${rev}", getBlogPostProcessor().getBlogPostInfoHolder()
 				.getLocale().equals("zh") ? "文章版本" : "Revisions");
 		return str.toString();
 	}

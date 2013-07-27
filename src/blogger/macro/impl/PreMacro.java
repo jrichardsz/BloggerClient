@@ -46,8 +46,8 @@ public class PreMacro extends MacroPair {
 					.append("<div class=\"bc-code-inner-div\"><span>Pre</span><a href=\"#\" onclick=\"return false;\"><span id=\"${code-span-id}\" onclick=\"bc_showhide('${code-pre-id}', '${code-span-id}');\">[-]</span></a></div>\n");
 			result.append("<pre id=\"${code-pre-id}\" class=\"bc-code-inner-pre\">\n");
 			long uniqueId = new Random().nextInt(Integer.MAX_VALUE);
-			StringUtils.replaceAllStr(result, "${code-span-id}", "bc-code-span-" + uniqueId);
-			StringUtils.replaceAllStr(result, "${code-pre-id}", "bc-code-pre-" + uniqueId);
+			StringUtils.replaceAll(result, "${code-span-id}", "bc-code-span-" + uniqueId);
+			StringUtils.replaceAll(result, "${code-pre-id}", "bc-code-pre-" + uniqueId);
 			result.append(embededStr);
 			result.append("</pre>\n");
 			result.append("</div>\n");

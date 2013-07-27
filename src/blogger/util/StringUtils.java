@@ -8,40 +8,52 @@ import java.util.List;
 
 public class StringUtils {
 
-	public static void replaceCharToStr(StringBuilder builder, final char fromChar, final String toStr) {
-		replaceCharToStr(builder, 0, builder.length() - 1, fromChar, toStr);
+	/**
+	 * @param fromChar
+	 *          it could not exist
+	 */
+	public static void replaceAll(StringBuilder strBuilder, char fromChar, String toStr) {
+		replaceAll(strBuilder, 0, strBuilder.length(), fromChar, toStr);
 	}
 
-	public static void replaceCharToStr(StringBuilder builder, final int startIndex,
-			final int endIndex, final char fromChar, final String toStr) {
+	/**
+	 * @param startIndex
+	 *          The beginning index, inclusive
+	 * @param endIndex
+	 *          The ending index, exclusive
+	 */
+	public static void replaceAll(StringBuilder strBuilder, int startIndex, int endIndex,
+			char fromChar, String toStr) {
 		// replace from ending to starting, no need to change index dynamically
-		for (int index = endIndex; index >= startIndex; index--) {
-			if (builder.charAt(index) == fromChar) {
-				builder.replace(index, index + 1, toStr);
+		for (int index = endIndex - 1; index >= startIndex; index--) {
+			if (strBuilder.charAt(index) == fromChar) {
+				strBuilder.replace(index, index + 1, toStr);
 			}
 		}
 	}
 
 	/**
-	 * @param fromStr it must exist
+	 * @param fromStr
+	 *          it must exist
 	 */
-	public static void replaceFirstStr(StringBuilder builder, String fromStr, String toStr) {
+	public static void replaceFirst(StringBuilder strBuilder, String fromStr, String toStr) {
 		// won't use String.replace, since it use regex, it need to be reserved.
-		int idx = builder.indexOf(fromStr);
-		builder.replace(idx, idx + fromStr.length(), toStr);
+		int idx = strBuilder.indexOf(fromStr);
+		strBuilder.replace(idx, idx + fromStr.length(), toStr);
 	}
 
 	/**
-	 * @param fromStr it could not exist, builder won't be changed in this case
+	 * @param fromStr
+	 *          it could not exist, text won't be changed in this case
 	 */
-	public static void replaceAllStr(StringBuilder builder, String fromStr, String toStr) {
+	public static void replaceAll(StringBuilder strBuilder, String fromStr, String toStr) {
 		// won't use String.replace, since it use regex, it need to be reserved.
 		int fromStrIdx, fromIndex = 0;
 		final int fromStrLen = fromStr.length(), toStrLen = toStr.length();
 		while (true) {
-			fromStrIdx = builder.indexOf(fromStr, fromIndex);
+			fromStrIdx = strBuilder.indexOf(fromStr, fromIndex);
 			if (fromStrIdx >= 0) {
-				builder.replace(fromStrIdx, fromStrIdx + fromStrLen, toStr);
+				strBuilder.replace(fromStrIdx, fromStrIdx + fromStrLen, toStr);
 				fromIndex = fromStrIdx + toStrLen;
 			}
 			else {
@@ -50,7 +62,10 @@ public class StringUtils {
 		}
 	}
 
-	public static List<String> readTextAsLines(final String text) throws IOException {
+	/**
+	 * @return lines list, list may be not thread-safe, it won't be null
+	 */
+	public static List<String> readTextAsLines(String text) throws IOException {
 		final List<String> result = new ArrayList<>();
 		try (BufferedReader bufferedReader = new BufferedReader(new StringReader(text))) {
 			String line;

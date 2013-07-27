@@ -10,20 +10,36 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoAES128 {
-	private final byte[] keyBytes, ivBytes;
+	private final byte[] key, iv;
 
-	public CryptoAES128(byte[] keyBytes, byte[] ivBytes) {
-		if (keyBytes.length != 16 || ivBytes.length != 16) {
+	/**
+	 * @param key
+	 *          used for {@link javax.crypto.spec.SecretKeySpec}
+	 * @param iv
+	 *          used for {@link javax.crypto.spec.IvParameterSpec}
+	 * @throws IllegalArgumentException
+	 *           if key/iv length is not 16
+	 */
+	public CryptoAES128(byte[] key, byte[] iv) {
+		if (key.length != 16 || iv.length != 16) {
 			throw new IllegalArgumentException("param bytes length must be 16");
 		}
-		this.keyBytes = keyBytes;
-		this.ivBytes = ivBytes;
+		this.key = key;
+		this.iv = iv;
 	}
 
+	/**
+	 * @throws InternalError
+	 *           if initialize AES failed
+	 */
 	public Cipher getEncryptCipher() {
 		return getCipher(Cipher.ENCRYPT_MODE);
 	}
 
+	/**
+	 * @throws InternalError
+	 *           if initialize AES failed
+	 */
 	public Cipher getDecryptCipher() {
 		return getCipher(Cipher.DECRYPT_MODE);
 	}
@@ -32,11 +48,12 @@ public class CryptoAES128 {
 		Cipher cipher;
 		try {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			cipher.init(opmode, new SecretKeySpec(keyBytes, "AES"), new IvParameterSpec(ivBytes));
+			cipher.init(opmode, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 		}
 		catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 				| InvalidAlgorithmParameterException e) {
-			throw new RuntimeException("init AES failed", e);
+			e.printStackTrace();
+			throw new InternalError("init AES failed");
 		}
 		return cipher;
 	}

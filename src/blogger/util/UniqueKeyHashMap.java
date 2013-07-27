@@ -10,13 +10,13 @@ public final class UniqueKeyHashMap<K, V> extends HashMap<K, V> {
 	 * <p>
 	 * {@inheritDoc}
 	 * 
-	 * @throws RuntimeException
+	 * @throws IllegalArgumentException
 	 *           if key already exists
 	 */
 	@Override
 	public synchronized V put(K key, V value) {
 		if (super.containsKey(key)) {
-			throw new RuntimeException(String.format("key [%s] already exists", key));
+			throw new IllegalArgumentException(String.format("key [%s] already exists", key));
 		}
 		else {
 			super.put(key, value);

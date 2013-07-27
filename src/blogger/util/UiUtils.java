@@ -20,11 +20,8 @@ import blogger.BloggerClient;
 public class UiUtils {
 
 	/**
-	 * {@link javax.swing.JOptionPane#showMessageDialog(Component, Object, String, int)} will be used,
-	 * parameters are the same as it.
-	 * 
-	 * @param messageType
-	 *          JOptionPane message type
+	 * {@link JOptionPane#showMessageDialog(Component, Object, String, int)} will be used, parameters
+	 * are the same as it.
 	 */
 	public static void showTextInTextareaDialog(Component parentComponent, String message,
 			String title, int messageType) {
@@ -54,6 +51,10 @@ public class UiUtils {
 		}
 	}
 
+	/**
+	 * {@link JOptionPane#showOptionDialog(Component, Object, String, int, int, javax.swing.Icon, Object[], Object)}
+	 * will be used, optionType is YES_NO_OPTION, messageType is ERROR_MESSAGE
+	 */
 	public static void showErrorMessage(final Component parentComponent, String message,
 			final Exception ex) {
 		ex.printStackTrace();

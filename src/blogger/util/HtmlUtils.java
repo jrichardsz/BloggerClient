@@ -1,6 +1,5 @@
 package blogger.util;
 
-
 public class HtmlUtils {
 
 	/**
@@ -38,21 +37,32 @@ public class HtmlUtils {
 		String entity;
 		for (String[] entityPair : LEFT_HTML_ENTITIES) {
 			entity = entityPair[1];
-			LogicAssert.assertTrue(
-					(entityPair[0].length() == 1 && entity.length() > 1 && entity.charAt(0) == '&' && entity
-							.charAt(entity.length() - 1) == ';'), "invalid entity: { \"%s\", \"%s\" }",
-					entityPair[0], entity);
+			if (!(entityPair[0].length() == 1 && entity.length() > 1 && entity.charAt(0) == '&' && entity
+					.charAt(entity.length() - 1) == ';')) {
+				throw new RuntimeException(String.format("invalid entity: { \"%s\", \"%s\" }",
+						entityPair[0], entity));
+			}
 		}
 	}
 
-	public static void replaceHtmlEntities(final StringBuilder body) {
-		replaceHtmlEntities(body, 0, body.length() - 1);
+	/**
+	 * replace HTML entities, i.e. "&lt;" to "&amp;lt;", space and soft hyphen are excluded.
+	 */
+	public static void replaceHtmlEntities(StringBuilder strBuilder) {
+		replaceHtmlEntities(strBuilder, 0, strBuilder.length());
 	}
 
-	public static void replaceHtmlEntities(final StringBuilder body, final int startIndex,
-			final int endIndex) {
+	/**
+	 * replace HTML entities, i.e. "&lt;" to "&amp;lt;", space and soft hyphen are excluded.
+	 * 
+	 * @param startIndex
+	 *          The beginning index, inclusive
+	 * @param endIndex
+	 *          The ending index, exclusive
+	 */
+	public static void replaceHtmlEntities(StringBuilder strBuilder, int startIndex, int endIndex) {
 		for (String[] entity : LEFT_HTML_ENTITIES) {
-			StringUtils.replaceCharToStr(body, startIndex, endIndex, entity[0].charAt(0), entity[1]);
+			StringUtils.replaceAll(strBuilder, startIndex, endIndex, entity[0].charAt(0), entity[1]);
 		}
 	}
 

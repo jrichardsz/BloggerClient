@@ -31,6 +31,8 @@ public class FileUtils {
 	 * @param name
 	 *          file relative path, i.e. blogger/macro/PlainHtmlElem.list
 	 * @return text lines, it won't be null
+	 * @throws URISyntaxException
+	 *           if package file can't be loaded
 	 * @see {@link java.nio.file.Files.readAllLines}
 	 */
 	public static List<String> readPackageFileAsLines(String name, Charset charset)
@@ -47,6 +49,8 @@ public class FileUtils {
 	 * @param name
 	 *          file relative path, i.e. blogger/macro/PlainHtmlElem.list
 	 * @return file's text, it won't be null
+	 * @throws URISyntaxException
+	 *           if package file can't be loaded
 	 */
 	public static String readPackageFileAsText(String name, Charset charset) throws IOException,
 			URISyntaxException {
@@ -71,8 +75,8 @@ public class FileUtils {
 	private static final Random FILENAME_RANDOM = new Random();
 
 	/**
-	 * create a empty temp file at file's directory, temp file's name is based on file's name,
-	 * i.e. input "f1.txt", may output "f1.txt.tmp.467913456"
+	 * create a empty temp file at file's directory, temp file's name is based on file's name, i.e.
+	 * input "f1.txt", may output "f1.txt.tmp.467913456"
 	 */
 	public static File getTempFile(File file) throws IOException {
 		File tempFile;
