@@ -5,6 +5,9 @@ import java.util.regex.Pattern;
 
 import blogger.util.LogicAssert;
 
+/**
+ * It's *not* thread-safe, but it could be modified in different threads at different time.
+ */
 public class BlogPostInfoHolder {
 
 	private volatile String title, tags, locale, uniquetoken, body;
@@ -15,7 +18,7 @@ public class BlogPostInfoHolder {
 	/** processed post file's body, it's html */
 	private volatile String htmlBody;
 
-	public BlogPostInfoHolder() {
+	BlogPostInfoHolder() {
 	}
 
 	void setMetadata(String title, String tags, String locale, String serverUniquetoken) {
@@ -79,9 +82,10 @@ public class BlogPostInfoHolder {
 		return uniquetoken;
 	}
 
-	void setUniquetoken(String newUniquetoken) {
+	void setUniquetoken(String serverUniquetoken) {
 		// unique token could be over-written
-		this.uniquetoken = newUniquetoken;
+		this.uniquetoken = serverUniquetoken;
+		isServerUniquetoken = true;
 	}
 
 	/** indicate whether the uniquetoken be from server or not */
@@ -118,9 +122,10 @@ public class BlogPostInfoHolder {
 
 	@Override
 	public String toString() {
-		return String.format(
-				"BlogPostInfoHolder [title=%s, tags=%s, locale=%s, uniquetoken=%s, htmlFile=%s]", title,
-				tags, locale, uniquetoken, htmlFile);
+		return String
+				.format(
+						"BlogPostInfoHolder [title=%s, tags=%s, locale=%s, uniquetoken=%s, isServerUniquetoken=%s, htmlFile=%s]",
+						title, tags, locale, uniquetoken, isServerUniquetoken, htmlFile);
 	}
 
 }
