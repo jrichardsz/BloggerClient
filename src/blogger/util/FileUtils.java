@@ -1,11 +1,15 @@
 package blogger.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -37,8 +41,15 @@ public class FileUtils {
 	 */
 	public static List<String> readPackageFileAsLines(String name, Charset charset)
 			throws IOException, URISyntaxException {
-		return Files.readAllLines(
-				new File(FileUtils.class.getClassLoader().getResource(name).toURI()).toPath(), charset);
+		List<String> result = new ArrayList<>();
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(FileUtils.class
+				.getClassLoader().getResourceAsStream(name), charset))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				result.add(line);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -54,8 +65,16 @@ public class FileUtils {
 	 */
 	public static String readPackageFileAsText(String name, Charset charset) throws IOException,
 			URISyntaxException {
-		return readFileAsText(new File(FileUtils.class.getClassLoader().getResource(name).toURI()),
-				charset);
+		StringBuilder text = new StringBuilder(8192);
+		try (Reader reader = new BufferedReader(new InputStreamReader(FileUtils.class.getClassLoader()
+				.getResourceAsStream(name), charset))) {
+			char[] cbuf = new char[1024];
+			int len;
+			while ((len = reader.read(cbuf)) > 0) {
+				text.append(cbuf, 0, len);
+			}
+		}
+		return text.toString();
 	}
 
 	/**
