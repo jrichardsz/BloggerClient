@@ -1,0 +1,51 @@
+<project name="BloggerClient" default="build" basedir="..">
+	<!-- set global properties for this build -->
+	<property name="src" location="src" />
+	<property name="test" location="test" />
+	<property name="target" location="target" />
+	<property name="classes" location="${target}/classes" />
+	<property name="dist" location="dist" />
+
+	<target name="init">
+		<mkdir dir="${target}" />
+		<mkdir dir="${classes}" />
+		<mkdir dir="${target}/bin" />
+		<mkdir dir="${target}/lib" />
+	</target>
+
+	<target name="compile" depends="init" description="compile the source ">
+		<javac destdir="${classes}" target="1.7">
+			<src path="${src}" />
+			<classpath>
+				<fileset dir="libs">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+		<copy todir="${classes}">
+			<fileset dir="${src}" />
+			<fileset dir="${test}" />
+		</copy>
+	</target>
+
+	<target name="build" depends="compile" description="generate the distribution">
+		<copy todir="${target}/lib">
+			<fileset dir="libs" />
+		</copy>
+		<jar destfile="${target}/lib/BloggerClient.jar" basedir="${classes}">
+		</jar>
+	</target>
+
+	<target name="dist" depends="build" description="generate the distribution">
+		<copy todir="${target}/bin">
+			<fileset dir="build/bin" />
+		</copy>
+		<zip destfile="${dist}/BloggerClientZZ.zip" basedir="${target}" includes="bin/*, lib/*" update="true" />
+	</target>
+
+	<target name="clean" description="clean up">
+		<delete dir="${classes}" includes="**/*" />
+		<delete file="${target}/lib/BloggerClient.jar" />
+		<delete dir="${dist}" includes="**/*" />
+	</target>
+</project>
